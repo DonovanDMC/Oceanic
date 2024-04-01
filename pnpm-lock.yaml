@@ -51,8 +51,8 @@ devDependencies:
     specifier: ^2.29.1
     version: 2.29.1(@typescript-eslint/parser@6.21.0)(eslint@8.57.0)
   eslint-plugin-import-newlines:
-    specifier: ^1.3.4
-    version: 1.3.4(eslint@8.57.0)
+    specifier: ^1.4.0
+    version: 1.4.0(eslint@8.57.0)
   eslint-plugin-jsdoc:
     specifier: ^48.0.4
     version: 48.0.4(eslint@8.57.0)
@@ -1079,8 +1079,8 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-plugin-import-newlines@1.3.4(eslint@8.57.0):
-    resolution: {integrity: sha512-Lmf/BbK+EQKUfjKPcZpslE/KTGYlgaI8ZJ/sYzdbb3BVTg5+GmLBLHBjsUKNEVRM1SEhDTF/didtOSYKi4tSnQ==}
+  /eslint-plugin-import-newlines@1.4.0(eslint@8.57.0):
+    resolution: {integrity: sha512-+Cz1x2xBLtI9gJbmuYEpvY7F8K75wskBmJ7rk4VRObIJo+jklUJaejFJgtnWeL0dCFWabGEkhausrikXaNbtoQ==}
     engines: {node: '>=10.0.0'}
     hasBin: true
     peerDependencies:
