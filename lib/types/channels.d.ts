@@ -1165,7 +1165,7 @@ export interface RawPoll {
     expiry: string;
     layout_type: PollLayoutType;
     question: PollQuestion;
-    results: RawPollResults | null;
+    results: RawPollResults;
 }
 
 export interface RawPollAnswer {

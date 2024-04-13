@@ -1030,6 +1030,8 @@ export enum Intents {
     GUILD_SCHEDULED_EVENTS        = 1 << 16,
     AUTO_MODERATION_CONFIGURATION = 1 << 20,
     AUTO_MODERATION_EXECUTION     = 1 << 21,
+    GUILD_MESSAGE_POLLS           = 1 << 24,
+    DIRECT_MESSAGE_POLLS          = 1 << 25,
 }
 
 export type IntentNames = keyof typeof Intents;
@@ -1050,7 +1052,9 @@ export const NonPrivilegedIntents = [
     Intents.DIRECT_MESSAGE_TYPING,
     Intents.GUILD_SCHEDULED_EVENTS,
     Intents.AUTO_MODERATION_CONFIGURATION,
-    Intents.AUTO_MODERATION_EXECUTION
+    Intents.AUTO_MODERATION_EXECUTION,
+    Intents.GUILD_MESSAGE_POLLS,
+    Intents.DIRECT_MESSAGE_POLLS
 ] as const;
 export const AllNonPrivilegedIntents = NonPrivilegedIntents.reduce((all, p) => all | p, 0);
 export const PrivilegedIntents = [

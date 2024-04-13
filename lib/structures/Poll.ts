@@ -2,13 +2,7 @@ import type Message from "./Message";
 import type User from "./User";
 import type Client from "../Client";
 import type { PollLayoutType } from "../Constants";
-import type {
-    GetPollAnswerUsersOptions,
-    PollAnswer,
-    PollResults,
-    RawPoll,
-    RawPollAnswerCount
-} from "../types/channels";
+import type { GetPollAnswerUsersOptions, PollAnswer, PollResults, RawPoll } from "../types/channels";
 import type { JSONPoll, PollQuestion } from "../types";
 
 export default class Poll {
@@ -36,17 +30,14 @@ export default class Poll {
         this.layoutType = data.layout_type;
         this.message = message;
         this.question = data.question;
-        // HACK: results seems to currently be nullable when polls are received over a gateway connection
-        // https://github.com/discord/discord-api-docs/pull/6746
-        const res = data.results ?? { answer_counts: [] as Array<RawPollAnswerCount>, is_finalized: false };
         this.results = {
-            answerCounts: res.answer_counts.map(a => ({
+            answerCounts: data.results.answer_counts.map(a => ({
                 count:   a.count,
                 id:      a.id,
                 meVoted: a.me_voted,
                 users:   []
             })),
-            isFinalized: res.is_finalized
+            isFinalized: data.results.is_finalized
         };
         // this makes working with this much easier as a developer. We still have systems in place to insert missing answerCounts, if needs be
         for (const answer of data.answers) {
