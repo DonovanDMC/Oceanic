@@ -46,7 +46,7 @@ export interface EditWebhookOptions extends EditWebhookTokenOptions {
     reason?: string;
 }
 
-export interface ExecuteWebhookOptions extends Pick<CreateMessageOptions, "content" | "tts" | "embeds" | "allowedMentions" | "components" | "attachments" | "flags" | "files"> {
+export interface ExecuteWebhookOptions extends Pick<CreateMessageOptions, "content" | "tts" | "embeds" | "allowedMentions" | "components" | "attachments" | "flags" | "files" | "poll"> {
     /** The url of an avatar to use. */
     avatarURL?: string;
     /** The id of the thread to send the message to. */

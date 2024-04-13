@@ -289,6 +289,7 @@ export interface AddGroupRecipientOptions {
     userID: string;
 }
 
+// make sure to add to ExecuteWebhookOptions & InteractionContent
 export interface CreateMessageOptions {
     /** An object that specifies the allowed mentions in this message. */
     allowedMentions?: AllowedMentions;
