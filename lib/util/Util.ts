@@ -6,8 +6,7 @@ import {
     ButtonStyles,
     ComponentTypes,
     ImageFormats,
-    MAX_IMAGE_SIZE,
-    MIN_IMAGE_SIZE,
+    MEDIA_PROXY_SIZES,
     type ImageFormat,
     ThreadChannelTypes,
     ChannelTypes
@@ -421,7 +420,7 @@ export default class Util {
         if (!format || !ImageFormats.includes(format.toLowerCase() as ImageFormat)) {
             format = url.includes("/a_") ? "gif" : this.#client.options.defaultImageFormat;
         }
-        if (!size || size < MIN_IMAGE_SIZE || size > MAX_IMAGE_SIZE) {
+        if (!size || !MEDIA_PROXY_SIZES.includes(size)) {
             size = this.#client.options.defaultImageSize;
         }
         return `${CDN_URL}${url}.${format}?size=${size}`;

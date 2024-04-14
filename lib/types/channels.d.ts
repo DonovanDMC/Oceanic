@@ -1103,9 +1103,28 @@ export interface ForumEmoji {
     name: string | null;
 }
 
-export type PossiblyUncachedMessage = Message | { channel: AnyTextableChannel | Uncached; channelID: string; guild?: Guild; guildID?: string; } & Uncached;
-export type PossiblyUncachedThread = AnyThreadChannel | Pick<AnyThreadChannel, "id" | "type"> & { guild?: Guild; guildID: string; parent?: ThreadParentChannel; parentID: string; };
-export type MinimalPossiblyUncachedThread = AnyThreadChannel | { guild?: Guild; guildID: string; id: string; };
+export type PossiblyUncachedMessage = Message | UncachedEventMessage;
+export type PossiblyUncachedThread = AnyThreadChannel | UncachedEventThread;
+export type MinimalPossiblyUncachedThread = AnyThreadChannel | MinimalPossiblyUncachedEventThread;
+
+export interface UncachedEventMessage extends Uncached {
+    channel: AnyTextableChannel | Uncached;
+    channelID: string;
+    guild?: Guild;
+    guildID?: string;
+}
+
+export interface UncachedEventThread extends Pick<AnyThreadChannel, "type">, Uncached {
+    guild?: Guild;
+    guildID?: string;
+    parent?: ThreadParentChannel | Uncached;
+    parentID: string;
+}
+
+export interface MinimalPossiblyUncachedEventThread extends Uncached {
+    guild?: Guild;
+    guildID: string;
+}
 
 export interface PurgeOptions<T extends AnyTextableGuildChannel | Uncached> {
     /** The ID of the message to purge after. */

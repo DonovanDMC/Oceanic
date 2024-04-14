@@ -1036,7 +1036,7 @@ export default class Shard extends TypedEmitter<ShardEvents> {
                     id:       packet.d.id,
                     guild:    this.client.guilds.get(packet.d.guild_id),
                     guildID:  packet.d.guild_id,
-                    parent:   channel,
+                    parent:   channel || { id: packet.d.parent_id! },
                     parentID: packet.d.parent_id!,
                     type:     packet.d.type
                 };
