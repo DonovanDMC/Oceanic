@@ -817,12 +817,12 @@ export default class Channels {
         if (options?.limit !== undefined) {
             qs.set("limit", options.limit.toString());
         }
-        return this.#manager.authRequest<Array<RawUser>>({
+        return this.#manager.authRequest<{ users: Array<RawUser>; }>({
             method: "GET",
             path:   Routes.POLL_ANSWER_USERS(channelID, messageID, answerID),
             query:  qs
         }).then(data => {
-            const users = data.map(user => this.#manager.client.users.update(user));
+            const users = data.users.map(user => this.#manager.client.users.update(user));
             const message = this.#manager.client.getChannel<AnyTextableChannel>(channelID)?.messages.get(messageID);
             if (message?.poll) {
                 this.#manager.client.util.replacePollAnswer(message.poll, answerID, users.length, users.map(u => u.id));
