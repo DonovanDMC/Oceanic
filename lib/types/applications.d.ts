@@ -337,37 +337,38 @@ export interface GetApplicationCommandOptions {
 }
 
 export type Locale =
-    "bg" |
-    "cs" |
+    "id" |
     "da" |
     "de" |
-    "el" |
     "en-GB" |
     "en-US" |
     "es-ES" |
-    "fi" |
+    "es-419" |
     "fr" |
-    "hi" |
     "hr" |
-    "hu" |
-    "id" |
     "it" |
-    "ja" |
-    "ko" |
     "lt" |
+    "hu" |
     "nl" |
     "no" |
     "pl" |
     "pt-BR" |
     "ro" |
-    "ru" |
+    "fi" |
     "sv-SE" |
-    "th" |
-    "tr" |
-    "uk" |
     "vi" |
+    "tr" |
+    "cs" |
+    "el" |
+    "bg" |
+    "ru" |
+    "uk" |
+    "hi" |
+    "th" |
     "zh-CN" |
-    "zh-TW";
+    "ja" |
+    "zh-TW" |
+    "ko";
 export type LocaleMap = Partial<Record<Locale, string>>;
 
 export interface CreateTestEntitlementOptions {
