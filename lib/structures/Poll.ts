@@ -30,14 +30,15 @@ export default class Poll {
         this.layoutType = data.layout_type;
         this.message = message;
         this.question = data.question;
+        const res = data.results || { answer_counts: [], is_finalized: false };
         this.results = {
-            answerCounts: data.results.answer_counts.map(a => ({
+            answerCounts: res.answer_counts.map(a => ({
                 count:   a.count,
                 id:      a.id,
                 meVoted: a.me_voted,
                 users:   []
             })),
-            isFinalized: data.results.is_finalized
+            isFinalized: res.is_finalized
         };
         // this makes working with this much easier as a developer. We still have systems in place to insert missing answerCounts, if needs be
         for (const answer of data.answers) {
