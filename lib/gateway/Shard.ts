@@ -94,6 +94,7 @@ export default class Shard extends TypedEmitter<ShardEvents> {
     private _guildCreateTimeout: NodeJS.Timeout | null;
     private _heartbeatInterval: NodeJS.Timeout | null;
     private _requestMembersPromise: Record<string, { members: Array<Member>; received: number; timeout: NodeJS.Timeout; reject(reason?: unknown): void; resolve(value: unknown): void; }>;
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     private _sharedZLib!: Pako.Inflate | Inflate;
     client!: Client;
     connectAttempts: number;
@@ -112,7 +113,6 @@ export default class Shard extends TypedEmitter<ShardEvents> {
     resumeURL: string | null;
     sequence: number;
     sessionID: string | null;
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     status: ShardStatus;
     ws!: WebSocket | null;
     constructor(id: number, client: Client) {
