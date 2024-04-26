@@ -13,9 +13,11 @@ import Interactions from "../routes/Interactions";
 import * as Routes from "../util/Routes";
 import type { GetBotGatewayResponse, GetGatewayResponse, RawGetBotGatewayResponse } from "../types/gateway";
 import Miscellaneous from "../routes/Miscellaneous";
+import Activities from "../routes/Activities";
 
 /** A manager for all rest actions. */
 export default class RESTManager {
+    activities: Activities;
     applications: Applications;
     channels: Channels;
     #client: Client;
@@ -27,6 +29,7 @@ export default class RESTManager {
     users: Users;
     webhooks: Webhooks;
     constructor(client: Client, options?: RESTOptions) {
+        this.activities = new Activities(this);
         this.applications = new Applications(this);
         this.channels = new Channels(this);
         this.#client = client;
