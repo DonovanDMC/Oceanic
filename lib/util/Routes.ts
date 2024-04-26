@@ -130,6 +130,9 @@ export const ENTITLEMENTS                          = (applicationID: string) => 
 export const ENTITLEMENT                           = (applicationID: string, entitlementID: string) => `/applications/${applicationID}/entitlements/${entitlementID}` as const;
 export const SKUS                                  = (applicationID: string) => `/applications/${applicationID}/skus` as const;
 
+// Activities
+export const ACTIVITY_INSTANCES = (activityID: string, channelID: string) => `/activities/${activityID}/instances/${channelID}` as const;
+
 // Misc
 export const GATEWAY                   = "/gateway" as const;
 export const GATEWAY_BOT               = "/gateway/bot" as const;
