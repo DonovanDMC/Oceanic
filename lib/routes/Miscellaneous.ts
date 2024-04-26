@@ -7,9 +7,9 @@ import type { RawRefreshAttachmentURLsResponse, RefreshAttachmentURLsResponse } 
 
 /** Methods that don't fit anywhere else. Located at {@link Client#rest | Client#rest}{@link RESTManager#misc | .misc}. */
 export default class Miscellaneous {
-    #manager: RESTManager;
+    private _manager: RESTManager;
     constructor(manager: RESTManager) {
-        this.#manager = manager;
+        this._manager = manager;
     }
 
     /**
@@ -19,10 +19,10 @@ export default class Miscellaneous {
      * @caches {@link Guild#stickers | Guild#stickers}
      */
     async getSticker(stickerID: string): Promise<Sticker> {
-        return this.#manager.authRequest<RawSticker>({
+        return this._manager.authRequest<RawSticker>({
             method: "GET",
             path:   Routes.STICKER(stickerID)
-        }).then(data => data.guild_id === undefined ? this.#manager.client.util.convertSticker(data) : this.#manager.client.guilds.get(data.guild_id)?.stickers.update(data) ?? this.#manager.client.util.convertSticker(data));
+        }).then(data => data.guild_id === undefined ? this._manager.client.util.convertSticker(data) : this._manager.client.guilds.get(data.guild_id)?.stickers.update(data) ?? this._manager.client.util.convertSticker(data));
     }
 
     /**
@@ -30,7 +30,7 @@ export default class Miscellaneous {
      * @caching This method **does not** cache its result.
      */
     async getStickerPacks(): Promise<Array<StickerPack>> {
-        return this.#manager.authRequest<{ sticker_packs: Array<RawStickerPack>; }>({
+        return this._manager.authRequest<{ sticker_packs: Array<RawStickerPack>; }>({
             method: "GET",
             path:   Routes.STICKER_PACKS
         }).then(data => data.sticker_packs.map(pack => ({
@@ -40,7 +40,7 @@ export default class Miscellaneous {
             id:             pack.id,
             name:           pack.name,
             skuID:          pack.sku_id,
-            stickers:       pack.stickers.map(sticker => this.#manager.client.util.convertSticker(sticker))
+            stickers:       pack.stickers.map(sticker => this._manager.client.util.convertSticker(sticker))
         })));
     }
 
@@ -49,7 +49,7 @@ export default class Miscellaneous {
      * @caching This method **does not** cache its result.
      */
     async getVoiceRegions(): Promise<Array<VoiceRegion>> {
-        return this.#manager.authRequest<Array<VoiceRegion>>({
+        return this._manager.authRequest<Array<VoiceRegion>>({
             method: "GET",
             path:   Routes.VOICE_REGIONS
         });
@@ -60,7 +60,7 @@ export default class Miscellaneous {
      * @param urls The CDN urls to refresh.
      */
     async refreshAttachmentURLs(urls: Array<string>): Promise<RefreshAttachmentURLsResponse> {
-        return this.#manager.authRequest<RawRefreshAttachmentURLsResponse>({
+        return this._manager.authRequest<RawRefreshAttachmentURLsResponse>({
             method: "POST",
             path:   Routes.REFRESH_ATTACHMENT_URLS,
             json:   {

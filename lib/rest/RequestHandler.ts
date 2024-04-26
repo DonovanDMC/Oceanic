@@ -15,9 +15,9 @@ import type { RESTOptions } from "../types/client";
 
 /** The primary means of communicating with Discord via rest. */
 export default class RequestHandler {
+    private _manager: RESTManager;
     globalBlock = false;
     latencyRef: LatencyRef;
-    #manager: RESTManager;
     options: RequestHandlerInstanceOptions;
     ratelimits: Record<string, SequentialBucket> = {};
     readyQueue: Array<() => void> = [];
@@ -25,7 +25,7 @@ export default class RequestHandler {
         if (options && options.baseURL && options.baseURL.endsWith("/")) {
             options.baseURL = options.baseURL.slice(0, -1);
         }
-        this.#manager = manager;
+        this._manager = manager;
         this.options = {
             agent:                      options.agent,
             baseURL:                    options.baseURL ?? API_URL,
@@ -113,8 +113,8 @@ export default class RequestHandler {
                 try {
                     if (typeof options.auth === "string") {
                         headers.Authorization = options.auth;
-                    } else if (options.auth && this.#manager.client.options.auth) {
-                        headers.Authorization = this.#manager.client.options.auth;
+                    } else if (options.auth && this._manager.client.options.auth) {
+                        headers.Authorization = this._manager.client.options.auth;
                     }
                     if (options.reason) {
                         headers["X-Audit-Log-Reason"] = encodeURIComponent(options.reason);
@@ -186,7 +186,7 @@ export default class RequestHandler {
                             try {
                                 resBody = JSON.parse(b) as Record<string, unknown>;
                             } catch (err) {
-                                this.#manager.client.emit("error", err as Error);
+                                this._manager.client.emit("error", err as Error);
                                 resBody = b;
                             }
                         } else {
@@ -194,7 +194,7 @@ export default class RequestHandler {
                         }
                     }
 
-                    this.#manager.client.emit("request", {
+                    this._manager.client.emit("request", {
                         method:       options.method,
                         path:         options.path,
                         route,
@@ -207,7 +207,7 @@ export default class RequestHandler {
                     if (this.latencyRef.lastTimeOffsetCheck < (Date.now() - 5000)) {
                         const timeOffset = headerNow + 500 - (this.latencyRef.lastTimeOffsetCheck = Date.now());
                         if (this.latencyRef.timeoffset - this.latencyRef.latency >= this.options.latencyThreshold && timeOffset - this.latencyRef.latency >= this.options.latencyThreshold) {
-                            this.#manager.client.emit("warn", `Your clock is ${this.latencyRef.timeoffset}ms behind Discord's server clock. Please check your connection and system time.`);
+                            this._manager.client.emit("warn", `Your clock is ${this.latencyRef.timeoffset}ms behind Discord's server clock. Please check your connection and system time.`);
                         }
 
                         this.latencyRef.timeoffset = this.latencyRef.timeoffset - Math.trunc(this.latencyRef.timeOffsets.shift()! / 10) + Math.trunc(timeOffset / 10);
@@ -217,7 +217,7 @@ export default class RequestHandler {
                         this.ratelimits[route].limit = Number(res.headers.get("x-ratelimit-limit"));
                     }
                     if (options.method !== "GET" && (!res.headers.has("x-ratelimit-remaining") || !res.headers.has("x-ratelimit-limit")) && this.ratelimits[route].limit !== 1) {
-                        this.#manager.client.emit("debug", [`Missing ratelimit headers for SequentialBucket(${this.ratelimits[route].remaining}/${this.ratelimits[route].limit}) with non-default limit\n`,
+                        this._manager.client.emit("debug", [`Missing ratelimit headers for SequentialBucket(${this.ratelimits[route].remaining}/${this.ratelimits[route].limit}) with non-default limit\n`,
                             `${res.status} ${res.headers.get("content-type") ?? "null"}: ${options.method} ${route} | ${res.headers.get("cf-ray") ?? "null"}\n`,
                             `content-type = ${res.headers.get("content-type") ?? "null"}\n`,
                             `x-ratelimit-remaining = ${res.headers.get("x-ratelimit-remaining") ?? "null"}\n`,
@@ -245,7 +245,7 @@ export default class RequestHandler {
                         this.ratelimits[route].reset = now;
                     }
                     if (res.status !== 429) {
-                        this.#manager.client.emit("debug", `${now} ${route} ${res.status}: ${latency}ms (${this.latencyRef.latency}ms avg) | ${this.ratelimits[route].remaining}/${this.ratelimits[route].limit} left | Reset ${this.ratelimits[route].reset} (${this.ratelimits[route].reset - now}ms left)`);
+                        this._manager.client.emit("debug", `${now} ${route} ${res.status}: ${latency}ms (${this.latencyRef.latency}ms avg) | ${this.ratelimits[route].remaining}/${this.ratelimits[route].limit} left | Reset ${this.ratelimits[route].reset} (${this.ratelimits[route].reset - now}ms left)`);
                     }
                     if (res.status > 300) {
                         if (res.status === 429) {
@@ -258,7 +258,7 @@ export default class RequestHandler {
                                 }
                             }
 
-                            this.#manager.client.emit("debug", `${res.headers.has("x-ratelimit-global") ? "Global" : "Unexpected"} RateLimit: ${JSON.stringify(resBody)}\n${now} ${route} ${res.status}: ${latency}ms (${this.latencyRef.latency}ms avg) | ${this.ratelimits[route].remaining}/${this.ratelimits[route].limit} left | Reset ${delay} (${this.ratelimits[route].reset - now}ms left) | Scope ${res.headers.get("x-ratelimit-scope")!}`);
+                            this._manager.client.emit("debug", `${res.headers.has("x-ratelimit-global") ? "Global" : "Unexpected"} RateLimit: ${JSON.stringify(resBody)}\n${now} ${route} ${res.status}: ${latency}ms (${this.latencyRef.latency}ms avg) | ${this.ratelimits[route].remaining}/${this.ratelimits[route].limit} left | Reset ${delay} (${this.ratelimits[route].reset - now}ms left) | Scope ${res.headers.get("x-ratelimit-scope")!}`);
                             if (delay) {
                                 setTimeout(() => {
                                     cb();
@@ -272,7 +272,7 @@ export default class RequestHandler {
                                 return;
                             }
                         } else if (res.status === 502 && ++attempts < 4) {
-                            this.#manager.client.emit("debug", `Unexpected 502 on ${options.method} ${route}`);
+                            this._manager.client.emit("debug", `Unexpected 502 on ${options.method} ${route}`);
                             setTimeout(() => {
                                 this.request<T>(options).then(resolve).catch(reject);
                             }, Math.floor(Math.random() * 1900 + 100));
@@ -295,7 +295,7 @@ export default class RequestHandler {
                     if (err instanceof Error && err.constructor.name === "DOMException" && err.name === "AbortError") {
                         reject(new Error(`Request Timed Out (>${this.options.requestTimeout}ms) on ${options.method} ${options.path}`));
                     }
-                    this.#manager.client.emit("error", err as Error);
+                    this._manager.client.emit("error", err as Error);
                 }
             }
             if (this.globalBlock && options.auth) {

@@ -8,11 +8,11 @@ import type { LatencyRef } from "../types/request-handler";
 
 /** A ratelimit bucket. */
 export default class SequentialBucket {
+    private _queue: Array<(cb: () => void) => void> = [];
     last: number;
     latencyRef: LatencyRef;
     limit: number;
     processing: NodeJS.Timeout | boolean = false;
-    #queue: Array<(cb: () => void) => void> = [];
     remaining: number;
     reset: number;
     constructor(limit: number, latencyRef: LatencyRef) {
@@ -22,7 +22,7 @@ export default class SequentialBucket {
     }
 
     private check(force = false): void {
-        if (this.#queue.length === 0) {
+        if (this._queue.length === 0) {
             if (this.processing) {
                 if (typeof this.processing !== "boolean") {
                     clearTimeout(this.processing);
@@ -50,8 +50,8 @@ export default class SequentialBucket {
         }
         --this.remaining;
         this.processing = true;
-        this.#queue.shift()!(() => {
-            if (this.#queue.length === 0) {
+        this._queue.shift()!(() => {
+            if (this._queue.length === 0) {
                 this.processing = false;
             } else {
                 this.check(true);
@@ -66,9 +66,9 @@ export default class SequentialBucket {
      */
     queue(func: (cb: () => void) => void, priority = false): void {
         if (priority) {
-            this.#queue.unshift(func);
+            this._queue.unshift(func);
         } else {
-            this.#queue.push(func);
+            this._queue.push(func);
         }
         this.check();
     }

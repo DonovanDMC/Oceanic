@@ -35,9 +35,9 @@ import type { RESTOAuthApplication, RawOAuthUser, UpdateUserApplicationRoleConne
 
 /** Various methods for interacting with oauth. Located at {@link Client#rest | Client#rest}{@link RESTManager#oauth | .oauth}. */
 export default class OAuth {
-    #manager: RESTManager;
+    private _manager: RESTManager;
     constructor(manager: RESTManager) {
-        this.#manager = manager;
+        this._manager = manager;
     }
 
     /**
@@ -49,17 +49,17 @@ export default class OAuth {
         const form = new FormData();
         form.append("grant_type", "client_credentials");
         form.append("scope", options.scopes.join(" "));
-        return this.#manager.request<RawClientCredentialsTokenResponse>({
+        return this._manager.request<RawClientCredentialsTokenResponse>({
             method: "POST",
             path:   Routes.OAUTH_TOKEN,
             form,
-            auth:   (options.clientID ?? this.#manager.client["_application"]) && options.clientSecret ? `Basic ${Buffer.from(`${options.clientID ?? this.#manager.client["_application"]!.id}:${options.clientSecret}`).toString("base64")}` : true
+            auth:   (options.clientID ?? this._manager.client["_application"]) && options.clientSecret ? `Basic ${Buffer.from(`${options.clientID ?? this._manager.client["_application"]!.id}:${options.clientSecret}`).toString("base64")}` : true
         }).then(data => ({
             accessToken: data.access_token,
             expiresIn:   data.expires_in,
             scopes:      data.scope.split(" "),
             tokenType:   data.token_type,
-            webhook:     data.webhook ? new Webhook(data.webhook, this.#manager.client) : null
+            webhook:     data.webhook ? new Webhook(data.webhook, this._manager.client) : null
         }));
     }
 
@@ -75,7 +75,7 @@ export default class OAuth {
         form.append("code", options.code);
         form.append("grant_type", "authorization_code");
         form.append("redirect_uri", options.redirectURI);
-        return this.#manager.authRequest<RawExchangeCodeResponse>({
+        return this._manager.authRequest<RawExchangeCodeResponse>({
             method: "POST",
             path:   Routes.OAUTH_TOKEN,
             form
@@ -85,7 +85,7 @@ export default class OAuth {
             refreshToken: data.refresh_token,
             scopes:       data.scope.split(" "),
             tokenType:    data.token_type,
-            webhook:      data.webhook ? new Webhook(data.webhook, this.#manager.client) : null
+            webhook:      data.webhook ? new Webhook(data.webhook, this._manager.client) : null
         }));
     }
 
@@ -94,10 +94,10 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async getApplication(): Promise<OAuthApplication> {
-        return this.#manager.authRequest<RESTOAuthApplication>({
+        return this._manager.authRequest<RESTOAuthApplication>({
             method: "GET",
             path:   Routes.OAUTH_APPLICATION
-        }).then(data => new OAuthApplication(data, this.#manager.client));
+        }).then(data => new OAuthApplication(data, this._manager.client));
     }
 
     /**
@@ -108,14 +108,14 @@ export default class OAuth {
      * @caches {@link Client#users | Client#users}
      */
     async getCurrentAuthorizationInformation(): Promise<AuthorizationInformation> {
-        return this.#manager.authRequest<RawAuthorizationInformation>({
+        return this._manager.authRequest<RawAuthorizationInformation>({
             method: "GET",
             path:   Routes.OAUTH_INFO
         }).then(data => ({
-            application: new PartialApplication(data.application, this.#manager.client),
+            application: new PartialApplication(data.application, this._manager.client),
             expires:     new Date(data.expires),
             scopes:      data.scopes,
-            user:        this.#manager.client.users.update(data.user)
+            user:        this._manager.client.users.update(data.user)
         }));
     }
 
@@ -126,13 +126,13 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async getCurrentConnections(): Promise<Array<Connection>> {
-        return this.#manager.authRequest<Array<RawConnection>>({
+        return this._manager.authRequest<Array<RawConnection>>({
             method: "GET",
             path:   Routes.OAUTH_CONNECTIONS
         }).then(data => data.map(connection => ({
             friendSync:   connection.friend_sync,
             id: 	         connection.id,
-            integrations: connection.integrations?.map(integration => new Integration(integration, this.#manager.client)),
+            integrations: connection.integrations?.map(integration => new Integration(integration, this._manager.client)),
             name:         connection.name,
             revoked:      connection.revoked,
             showActivity: connection.show_activity,
@@ -151,10 +151,10 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async getCurrentGuildMember(guild: string): Promise<Member> {
-        return this.#manager.authRequest<RESTMember>({
+        return this._manager.authRequest<RESTMember>({
             method: "GET",
             path:   Routes.OAUTH_GUILD_MEMBER(guild)
-        }).then(data => new Member(data, this.#manager.client, guild));
+        }).then(data => new Member(data, this._manager.client, guild));
     }
 
     /**
@@ -176,11 +176,11 @@ export default class OAuth {
         if (options?.withCounts !== undefined) {
             query.set("with_counts", options?.withCounts.toString());
         }
-        return this.#manager.authRequest<Array<RawOAuthGuild>>({
+        return this._manager.authRequest<Array<RawOAuthGuild>>({
             method: "GET",
             path:   Routes.OAUTH_GUILDS,
             query
-        }).then(data => data.map(d => new OAuthGuild(d, this.#manager.client)));
+        }).then(data => data.map(d => new OAuthGuild(d, this._manager.client)));
     }
 
     /**
@@ -188,10 +188,10 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async getCurrentUser(): Promise<ExtendedUser> {
-        return this.#manager.authRequest<RawOAuthUser>({
+        return this._manager.authRequest<RawOAuthUser>({
             method: "GET",
             path:   Routes.OAUTH_CURRENT_USER
-        }).then(data => new ExtendedUser(data, this.#manager.client));
+        }).then(data => new ExtendedUser(data, this._manager.client));
     }
 
     /**
@@ -199,7 +199,7 @@ export default class OAuth {
      * @param accessToken The access token. Must be prefixed with `Bearer `.
      */
     getHelper(accessToken: string): OAuthHelper {
-        return new OAuthHelper(this.#manager, accessToken);
+        return new OAuthHelper(this._manager, accessToken);
     }
 
     /**
@@ -208,7 +208,7 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async getRoleConnectionsMetadata(applicationID: string): Promise<Array<RoleConnectionMetadata>> {
-        return this.#manager.authRequest<Array<RawRoleConnectionMetadata>>({
+        return this._manager.authRequest<Array<RawRoleConnectionMetadata>>({
             method: "GET",
             path:   Routes.ROLE_CONNECTIONS_METADATA(applicationID)
         }).then(data => data.map(d => ({
@@ -227,7 +227,7 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async getUserRoleConnection(applicationID: string): Promise<RoleConnection> {
-        return this.#manager.authRequest<RawRoleConnection>({
+        return this._manager.authRequest<RawRoleConnection>({
             method: "GET",
             path:   Routes.OAUTH_ROLE_CONNECTION(applicationID)
         }).then(data => ({
@@ -256,7 +256,7 @@ export default class OAuth {
         form.append("client_secret", options.clientSecret);
         form.append("grant_type", "refresh_token");
         form.append("refresh_token", options.refreshToken);
-        return this.#manager.authRequest<RawRefreshTokenResponse>({
+        return this._manager.authRequest<RawRefreshTokenResponse>({
             method: "POST",
             path:   Routes.OAUTH_TOKEN,
             form
@@ -280,7 +280,7 @@ export default class OAuth {
         form.append("client_id", options.clientID);
         form.append("client_secret", options.clientSecret);
         form.append("token", options.token);
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "POST",
             path:   Routes.OAUTH_TOKEN_REVOKE,
             form
@@ -294,7 +294,7 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async updateRoleConnectionsMetadata(applicationID: string, metadata: Array<RoleConnectionMetadata>): Promise<Array<RoleConnectionMetadata>> {
-        return this.#manager.authRequest<Array<RawRoleConnectionMetadata>>({
+        return this._manager.authRequest<Array<RawRoleConnectionMetadata>>({
             method: "PUT",
             path:   Routes.ROLE_CONNECTIONS_METADATA(applicationID),
             json:   metadata.map(d => ({
@@ -322,7 +322,7 @@ export default class OAuth {
      * @caching This method **does not** cache its result.
      */
     async updateUserRoleConnection(applicationID: string, data: UpdateUserApplicationRoleConnectionOptions): Promise<RoleConnection> {
-        return this.#manager.authRequest<RawRoleConnection>({
+        return this._manager.authRequest<RawRoleConnection>({
             method: "PUT",
             path:   Routes.OAUTH_ROLE_CONNECTION(applicationID),
             json:   {

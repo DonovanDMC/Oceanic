@@ -16,9 +16,9 @@ import Miscellaneous from "../routes/Miscellaneous";
 
 /** A manager for all rest actions. */
 export default class RESTManager {
+    private _client: Client;
     applications: Applications;
     channels: Channels;
-    #client: Client;
     guilds: Guilds;
     handler: RequestHandler;
     interactions: Interactions;
@@ -29,7 +29,7 @@ export default class RESTManager {
     constructor(client: Client, options?: RESTOptions) {
         this.applications = new Applications(this);
         this.channels = new Channels(this);
-        this.#client = client;
+        this._client = client;
         this.guilds = new Guilds(this);
         this.handler = new RequestHandler(this, options);
         this.interactions = new Interactions(this);
@@ -40,7 +40,7 @@ export default class RESTManager {
     }
 
     get client(): Client {
-        return this.#client;
+        return this._client;
     }
     get options(): RESTOptions {
         return this.handler.options;

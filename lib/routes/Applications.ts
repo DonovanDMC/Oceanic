@@ -32,9 +32,9 @@ import Application from "../structures/Application";
 
 /** Various methods for interacting with application commands. Located at {@link Client#rest | Client#rest}{@link RESTManager#applications | .applications}. */
 export default class Applications {
-    #manager: RESTManager;
+    private _manager: RESTManager;
     constructor(manager: RESTManager) {
-        this.#manager = manager;
+        this._manager = manager;
     }
 
     /**
@@ -45,7 +45,7 @@ export default class Applications {
      */
     async bulkEditGlobalCommands(applicationID: string, options: Array<CreateApplicationCommandOptions>): Promise<Array<ApplicationCommand>> {
         const opts = options as Array<CreateChatInputApplicationCommandOptions>;
-        return this.#manager.authRequest<Array<RawApplicationCommand>>({
+        return this._manager.authRequest<Array<RawApplicationCommand>>({
             method: "PUT",
             path:   Routes.APPLICATION_COMMANDS(applicationID),
             json:   opts.map(opt => ({
@@ -58,10 +58,10 @@ export default class Applications {
                 name:                       opt.name,
                 name_localizations:         opt.nameLocalizations,
                 nsfw:                       opt.nsfw,
-                options:                    opt.options?.map(o => this.#manager.client.util.optionToRaw(o)),
+                options:                    opt.options?.map(o => this._manager.client.util.optionToRaw(o)),
                 type:                       opt.type
             }))
-        }).then(data => data.map(d => new ApplicationCommand(d, this.#manager.client)));
+        }).then(data => data.map(d => new ApplicationCommand(d, this._manager.client)));
     }
 
     /**
@@ -73,7 +73,7 @@ export default class Applications {
      */
     async bulkEditGuildCommands(applicationID: string, guildID: string, options: Array<CreateGuildApplicationCommandOptions>): Promise<Array<ApplicationCommand>> {
         const opts = options as Array<CreateChatInputApplicationCommandOptions>;
-        return this.#manager.authRequest<Array<RawApplicationCommand>>({
+        return this._manager.authRequest<Array<RawApplicationCommand>>({
             method: "PUT",
             path:   Routes.GUILD_APPLICATION_COMMANDS(applicationID, guildID),
             json:   opts.map(opt => ({
@@ -85,10 +85,10 @@ export default class Applications {
                 name:                       opt.name,
                 name_localizations:         opt.nameLocalizations,
                 nsfw:                       opt.nsfw,
-                options:                    opt.options?.map(o => this.#manager.client.util.optionToRaw(o)),
+                options:                    opt.options?.map(o => this._manager.client.util.optionToRaw(o)),
                 type:                       opt.type
             }))
-        }).then(data => data.map(d => new ApplicationCommand(d, this.#manager.client)));
+        }).then(data => data.map(d => new ApplicationCommand(d, this._manager.client)));
     }
 
     /**
@@ -99,7 +99,7 @@ export default class Applications {
      */
     async createGlobalCommand<T extends CreateApplicationCommandOptions = CreateApplicationCommandOptions>(applicationID: string, options: T): Promise<ApplicationCommandOptionConversion<T>> {
         const opt = options as CreateChatInputApplicationCommandOptions;
-        return this.#manager.authRequest<RawApplicationCommand>({
+        return this._manager.authRequest<RawApplicationCommand>({
             method: "POST",
             path:   Routes.APPLICATION_COMMANDS(applicationID),
             json:   {
@@ -112,10 +112,10 @@ export default class Applications {
                 name:                       opt.name,
                 name_localizations:         opt.nameLocalizations,
                 nsfw:                       opt.nsfw,
-                options:                    opt.options?.map(o => this.#manager.client.util.optionToRaw(o)),
+                options:                    opt.options?.map(o => this._manager.client.util.optionToRaw(o)),
                 type:                       opt.type
             }
-        }).then(data => new ApplicationCommand(data, this.#manager.client) as never);
+        }).then(data => new ApplicationCommand(data, this._manager.client) as never);
     }
 
     /**
@@ -127,7 +127,7 @@ export default class Applications {
      */
     async createGuildCommand<T extends CreateGuildApplicationCommandOptions = CreateGuildApplicationCommandOptions>(applicationID: string, guildID: string, options: T): Promise<ApplicationCommandOptionConversion<T>> {
         const opt = options as CreateChatInputApplicationCommandOptions;
-        return this.#manager.authRequest<RawApplicationCommand>({
+        return this._manager.authRequest<RawApplicationCommand>({
             method: "POST",
             path:   Routes.GUILD_APPLICATION_COMMANDS(applicationID, guildID),
             json:   {
@@ -138,10 +138,10 @@ export default class Applications {
                 name:                       opt.name,
                 name_localizations:         opt.nameLocalizations,
                 nsfw:                       opt.nsfw,
-                options:                    opt.options?.map(o => this.#manager.client.util.optionToRaw(o)),
+                options:                    opt.options?.map(o => this._manager.client.util.optionToRaw(o)),
                 type:                       opt.type
             }
-        }).then(data => new ApplicationCommand(data, this.#manager.client) as never);
+        }).then(data => new ApplicationCommand(data, this._manager.client) as never);
     }
 
     /**
@@ -150,7 +150,7 @@ export default class Applications {
      * @param options The options for creating the test entitlement.
      */
     async createTestEntitlement(applicationID: string, options: CreateTestEntitlementOptions): Promise<TestEntitlement> {
-        return this.#manager.authRequest<RawTestEntitlement>({
+        return this._manager.authRequest<RawTestEntitlement>({
             method: "POST",
             path:   Routes.ENTITLEMENTS(applicationID),
             json:   {
@@ -158,7 +158,7 @@ export default class Applications {
                 owner_type: options.ownerType,
                 sku_id:     options.skuID
             }
-        }).then(data => new TestEntitlement(data, this.#manager.client));
+        }).then(data => new TestEntitlement(data, this._manager.client));
     }
 
     /**
@@ -168,7 +168,7 @@ export default class Applications {
      * @caching This method **does not** cache its result.
      */
     async deleteGlobalCommand(applicationID: string, commandID: string): Promise<void> {
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.APPLICATION_COMMAND(applicationID, commandID)
         });
@@ -182,7 +182,7 @@ export default class Applications {
      * @caching This method **does not** cache its result.
      */
     async deleteGuildCommand(applicationID: string, guildID: string, commandID: string): Promise<void> {
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.GUILD_APPLICATION_COMMAND(applicationID, guildID, commandID)
         });
@@ -194,7 +194,7 @@ export default class Applications {
      * @param entitlementID The ID of the entitlement to delete.
      */
     async deleteTestEntitlement(applicationID: string, entitlementID: string): Promise<void> {
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.ENTITLEMENT(applicationID, entitlementID)
         });
@@ -207,14 +207,14 @@ export default class Applications {
      */
     async editCurrent(options: EditApplicationOptions): Promise<Application> {
         if (options.coverImage) {
-            options.coverImage = this.#manager.client.util._convertImage(options.coverImage, "cover image");
+            options.coverImage = this._manager.client.util._convertImage(options.coverImage, "cover image");
         }
 
         if (options.icon) {
-            options.icon = this.#manager.client.util._convertImage(options.icon, "cover image");
+            options.icon = this._manager.client.util._convertImage(options.icon, "cover image");
         }
 
-        return this.#manager.authRequest<RESTApplication>({
+        return this._manager.authRequest<RESTApplication>({
             method: "PATCH",
             path:   Routes.APPLICATION,
             json:   {
@@ -229,7 +229,7 @@ export default class Applications {
                 role_connections_verification_url: options.roleConnectionsVerificationURL,
                 tags:                              options.tags
             }
-        }).then(data => new Application(data, this.#manager.client));
+        }).then(data => new Application(data, this._manager.client));
     }
 
     /**
@@ -241,7 +241,7 @@ export default class Applications {
      */
     async editGlobalCommand<T extends EditApplicationCommandOptions = EditApplicationCommandOptions>(applicationID: string, commandID: string, options: T): Promise<ApplicationCommandOptionConversion<T>> {
         const opt = options as EditChatInputApplicationCommandOptions;
-        return this.#manager.authRequest<RawApplicationCommand>({
+        return this._manager.authRequest<RawApplicationCommand>({
             method: "PATCH",
             path:   Routes.APPLICATION_COMMAND(applicationID, commandID),
             json:   {
@@ -254,9 +254,9 @@ export default class Applications {
                 name:                       opt.name,
                 name_localizations:         opt.nameLocalizations,
                 nsfw:                       opt.nsfw,
-                options:                    opt.options?.map(o => this.#manager.client.util.optionToRaw(o))
+                options:                    opt.options?.map(o => this._manager.client.util.optionToRaw(o))
             }
-        }).then(data => new ApplicationCommand(data, this.#manager.client) as never);
+        }).then(data => new ApplicationCommand(data, this._manager.client) as never);
     }
 
     /**
@@ -269,7 +269,7 @@ export default class Applications {
      */
     async editGuildCommand<T extends EditGuildApplicationCommandOptions = EditGuildApplicationCommandOptions>(applicationID: string, guildID: string, commandID: string, options: T): Promise<ApplicationCommandOptionConversion<T>> {
         const opt = options as EditChatInputApplicationCommandOptions;
-        return this.#manager.authRequest<RawApplicationCommand>({
+        return this._manager.authRequest<RawApplicationCommand>({
             method: "PATCH",
             path:   Routes.GUILD_APPLICATION_COMMAND(applicationID, guildID, commandID),
             json:   {
@@ -280,9 +280,9 @@ export default class Applications {
                 name:                       opt.name,
                 name_localizations:         opt.nameLocalizations,
                 nsfw:                       opt.nsfw,
-                options:                    opt.options?.map(o => this.#manager.client.util.optionToRaw(o))
+                options:                    opt.options?.map(o => this._manager.client.util.optionToRaw(o))
             }
-        }).then(data => new ApplicationCommand(data, this.#manager.client) as never);
+        }).then(data => new ApplicationCommand(data, this._manager.client) as never);
     }
 
     /**
@@ -294,7 +294,7 @@ export default class Applications {
      * @caching This method **does not** cache its result.
      */
     async editGuildCommandPermissions(applicationID: string, guildID: string, commandID: string, options: EditApplicationCommandPermissionsOptions): Promise<RESTGuildApplicationCommandPermissions> {
-        return (options.accessToken ? this.#manager.request.bind(this.#manager) : this.#manager.authRequest.bind(this.#manager))({
+        return (options.accessToken ? this._manager.request.bind(this._manager) : this._manager.authRequest.bind(this._manager))({
             method: "PATCH",
             path:   Routes.GUILD_APPLICATION_COMMAND_PERMISSION(applicationID, guildID, commandID),
             json:   { permissions: options.permissions },
@@ -315,10 +315,10 @@ export default class Applications {
      * @caching This method **does not** cache its result.
      */
     async getClient(): Promise<ClientApplication> {
-        return this.#manager.authRequest<RawClientApplication>({
+        return this._manager.authRequest<RawClientApplication>({
             method: "GET",
             path:   Routes.APPLICATION
-        }).then(data => new ClientApplication(data, this.#manager.client));
+        }).then(data => new ClientApplication(data, this._manager.client));
     }
 
     /**
@@ -326,10 +326,10 @@ export default class Applications {
      * @caching This method **does not** cache its result.
      */
     async getCurrent(): Promise<Application> {
-        return this.#manager.authRequest<RESTApplication>({
+        return this._manager.authRequest<RESTApplication>({
             method: "GET",
             path:   Routes.APPLICATION
-        }).then(data => new Application(data, this.#manager.client));
+        }).then(data => new Application(data, this._manager.client));
     }
 
     /**
@@ -346,11 +346,11 @@ export default class Applications {
         if (options.limit !== undefined) query.set("limit", String(options.limit));
         if (options.skuIDs !== undefined) query.set("sku_ids", options.skuIDs.join(","));
         if (options.userID !== undefined) query.set("subscription_id", options.userID);
-        return this.#manager.authRequest<Array<RawEntitlement | RawTestEntitlement>>({
+        return this._manager.authRequest<Array<RawEntitlement | RawTestEntitlement>>({
             method: "GET",
             path:   Routes.ENTITLEMENTS(applicationID),
             query
-        }).then(data => data.map(d => "subscription_id" in d && d.subscription_id ? new Entitlement(d, this.#manager.client) : new TestEntitlement(d, this.#manager.client)));
+        }).then(data => data.map(d => "subscription_id" in d && d.subscription_id ? new Entitlement(d, this._manager.client) : new TestEntitlement(d, this._manager.client)));
     }
 
     /**
@@ -365,12 +365,12 @@ export default class Applications {
         if (options?.withLocalizations !== undefined) {
             query.set("with_localizations", options.withLocalizations.toString());
         }
-        return this.#manager.authRequest<RawApplicationCommand>({
+        return this._manager.authRequest<RawApplicationCommand>({
             method:  "GET",
             path:    Routes.APPLICATION_COMMAND(applicationID, commandID),
             query,
             headers: options?.locale === undefined ? undefined : { "X-Discord-Locale": options.locale }
-        }).then(data => new ApplicationCommand(data, this.#manager.client) as never);
+        }).then(data => new ApplicationCommand(data, this._manager.client) as never);
     }
 
     /**
@@ -384,12 +384,12 @@ export default class Applications {
         if (options?.withLocalizations !== undefined) {
             query.set("with_localizations", options.withLocalizations.toString());
         }
-        return this.#manager.authRequest<Array<RawApplicationCommand>>({
+        return this._manager.authRequest<Array<RawApplicationCommand>>({
             method:  "GET",
             path:    Routes.APPLICATION_COMMANDS(applicationID),
             query,
             headers: options?.locale === undefined ? undefined : { "X-Discord-Locale": options.locale }
-        }).then(data => data.map(d => new ApplicationCommand(d, this.#manager.client)) as never);
+        }).then(data => data.map(d => new ApplicationCommand(d, this._manager.client)) as never);
     }
 
     /**
@@ -405,12 +405,12 @@ export default class Applications {
         if (options?.withLocalizations !== undefined) {
             query.set("with_localizations", options.withLocalizations.toString());
         }
-        return this.#manager.authRequest<RawApplicationCommand>({
+        return this._manager.authRequest<RawApplicationCommand>({
             method:  "GET",
             path:    Routes.GUILD_APPLICATION_COMMAND(applicationID, commandID, guildID),
             query,
             headers: options?.locale === undefined ? undefined : { "X-Discord-Locale": options.locale }
-        }).then(data => new ApplicationCommand(data, this.#manager.client) as never);
+        }).then(data => new ApplicationCommand(data, this._manager.client) as never);
     }
 
     /**
@@ -425,12 +425,12 @@ export default class Applications {
         if (options?.withLocalizations !== undefined) {
             query.set("with_localizations", options.withLocalizations.toString());
         }
-        return this.#manager.authRequest<Array<RawApplicationCommand>>({
+        return this._manager.authRequest<Array<RawApplicationCommand>>({
             method:  "GET",
             path:    Routes.GUILD_APPLICATION_COMMANDS(applicationID, guildID),
             query,
             headers: options?.locale === undefined ? undefined : { "X-Discord-Locale": options.locale }
-        }).then(data => data.map(d => new ApplicationCommand(d, this.#manager.client)) as never);
+        }).then(data => data.map(d => new ApplicationCommand(d, this._manager.client)) as never);
     }
 
     /**
@@ -441,7 +441,7 @@ export default class Applications {
      * @caching This method **does not** cache its result.
      */
     async getGuildPermission(applicationID: string, guildID: string, commandID: string): Promise<RESTGuildApplicationCommandPermissions> {
-        return this.#manager.authRequest<RawGuildApplicationCommandPermissions>({
+        return this._manager.authRequest<RawGuildApplicationCommandPermissions>({
             method: "GET",
             path:   Routes.GUILD_APPLICATION_COMMAND_PERMISSION(applicationID, guildID, commandID)
         }).then(data => ({
@@ -459,7 +459,7 @@ export default class Applications {
      * @caching This method **does not** cache its result.
      */
     async getGuildPermissions(applicationID: string, guildID: string): Promise<Array<RESTGuildApplicationCommandPermissions>> {
-        return this.#manager.authRequest<Array<RawGuildApplicationCommandPermissions>>({
+        return this._manager.authRequest<Array<RawGuildApplicationCommandPermissions>>({
             method: "GET",
             path:   Routes.GUILD_APPLICATION_COMMAND_PERMISSIONS(applicationID, guildID)
         }).then(data => data.map(d => ({
@@ -475,9 +475,9 @@ export default class Applications {
      * @param applicationID The ID of the application to get the SKUs of.
      */
     async getSKUs(applicationID: string): Promise<Array<SKU>> {
-        return this.#manager.authRequest<Array<RawSKU>>({
+        return this._manager.authRequest<Array<RawSKU>>({
             method: "GET",
             path:   Routes.SKUS(applicationID)
-        }).then(data => data.map(d => new SKU(d, this.#manager.client)));
+        }).then(data => data.map(d => new SKU(d, this._manager.client)));
     }
 }

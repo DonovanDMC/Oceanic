@@ -13,7 +13,7 @@ export interface ExtraOptions<M extends Record<string, any>, C extends Base, E e
 /** This is an internal class, you should not use it in your projects. If you want a collection type for your own projects, look at {@link Collection}. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default class TypedCollection<M extends Record<string, any>, C extends Base, E extends Array<unknown> = []> extends Collection<string, C> {
-    #baseObject: AnyClass<M, C, E>;
+    private _baseObject: AnyClass<M, C, E>;
     extraOptions: Required<ExtraOptions<M, C, E>>;
     limit: number;
     constructor(baseObject: AnyClass<M, C, E>, client: Client, limit = Infinity, extraOptions?: ExtraOptions<M, C, E>) {
@@ -21,7 +21,7 @@ export default class TypedCollection<M extends Record<string, any>, C extends Ba
         if (!(baseObject.prototype instanceof Base)) {
             throw new TypeError("baseObject must be a class that extends Base.");
         }
-        this.#baseObject = baseObject;
+        this._baseObject = baseObject;
         this.limit = limit;
         this.extraOptions = {
             construct: extraOptions?.construct ?? ((data, ...extra): C => new baseObject(data, client, ...extra)),
@@ -67,7 +67,7 @@ export default class TypedCollection<M extends Record<string, any>, C extends Ba
 
     /** @hidden */
     update(value: C | Partial<M> & { id?: string; }, ...extra: E): C {
-        if (value instanceof this.#baseObject) {
+        if (value instanceof this._baseObject) {
             if ("update" in value) {
                 value["update"].call(value, value);
             }

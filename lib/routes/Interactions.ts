@@ -10,9 +10,9 @@ import type { Uncached } from "../types/shared";
 
 /** Various methods for interacting with interactions. Located at {@link Client#rest | Client#rest}{@link RESTManager#interactions | .interactions}. */
 export default class Interactions {
-    #manager: RESTManager;
+    private _manager: RESTManager;
     constructor(manager: RESTManager) {
-        this.#manager = manager;
+        this._manager = manager;
     }
 
     /**
@@ -23,7 +23,7 @@ export default class Interactions {
      * @caching This method **does not** cache its result.
      */
     async createFollowupMessage<T extends AnyTextableChannel | Uncached>(applicationID: string, interactionToken: string, options: InteractionContent): Promise<Message<T>> {
-        return this.#manager.webhooks.execute<T>(applicationID, interactionToken, options as ExecuteWebhookWaitOptions);
+        return this._manager.webhooks.execute<T>(applicationID, interactionToken, options as ExecuteWebhookWaitOptions);
     }
 
     /**
@@ -42,11 +42,11 @@ export default class Interactions {
             case InteractionResponseTypes.CHANNEL_MESSAGE_WITH_SOURCE:
             case InteractionResponseTypes.UPDATE_MESSAGE: {
                 data = {
-                    allowed_mentions: this.#manager.client.util.formatAllowedMentions(options.data.allowedMentions),
+                    allowed_mentions: this._manager.client.util.formatAllowedMentions(options.data.allowedMentions),
                     attachments:      options.data.attachments,
                     content:          options.data.content,
-                    components:       options.data.components ? this.#manager.client.util.componentsToRaw(options.data.components) : undefined,
-                    embeds:           options.data.embeds ? this.#manager.client.util.embedsToRaw(options.data.embeds) : undefined,
+                    components:       options.data.components ? this._manager.client.util.componentsToRaw(options.data.components) : undefined,
+                    embeds:           options.data.embeds ? this._manager.client.util.embedsToRaw(options.data.embeds) : undefined,
                     flags:            options.data.flags
                 };
                 break;
@@ -66,7 +66,7 @@ export default class Interactions {
             case InteractionResponseTypes.MODAL: {
                 data = {
                     custom_id:  options.data.customID,
-                    components: this.#manager.client.util.componentsToRaw(options.data.components),
+                    components: this._manager.client.util.componentsToRaw(options.data.components),
                     title:      options.data.title
                 };
                 break;
@@ -77,7 +77,7 @@ export default class Interactions {
                 break;
             }
         }
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "POST",
             path:   Routes.INTERACTION_CALLBACK(interactionID, interactionToken),
             route:  "/interactions/:id/:token/callback",
@@ -96,7 +96,7 @@ export default class Interactions {
      * @caching This method **does not** cache its result.
      */
     async deleteFollowupMessage(applicationID: string, interactionToken: string, messageID: string): Promise<void> {
-        await this.#manager.webhooks.deleteMessage(applicationID, interactionToken, messageID);
+        await this._manager.webhooks.deleteMessage(applicationID, interactionToken, messageID);
     }
 
     /**
@@ -118,7 +118,7 @@ export default class Interactions {
      * @caching This method **does not** cache its result.
      */
     async editFollowupMessage<T extends AnyTextableChannel | Uncached>(applicationID: string, interactionToken: string, messageID: string, options: EditInteractionContent): Promise<Message<T>> {
-        return this.#manager.webhooks.editMessage<T>(applicationID, interactionToken, messageID, options);
+        return this._manager.webhooks.editMessage<T>(applicationID, interactionToken, messageID, options);
     }
 
     /**
@@ -140,7 +140,7 @@ export default class Interactions {
      * @caching This method **does not** cache its result.
      */
     async getFollowupMessage<T extends AnyTextableChannel | Uncached>(applicationID: string, interactionToken: string, messageID: string): Promise<Message<T>> {
-        return this.#manager.webhooks.getMessage<T>(applicationID, interactionToken, messageID);
+        return this._manager.webhooks.getMessage<T>(applicationID, interactionToken, messageID);
     }
 
     /**

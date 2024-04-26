@@ -6,11 +6,11 @@
 
 /** A bucket. */
 export default class Bucket {
+    private _queue: Array<{ priority: boolean; func(): void;}> = [];
     interval: number;
     lastReset: number;
     lastSend: number;
     latencyRef: { latency: number; };
-    #queue: Array<{ priority: boolean; func(): void;}> = [];
     reservedTokens: number;
     timeout: NodeJS.Timeout | null;
     tokenLimit: number;
@@ -25,7 +25,7 @@ export default class Bucket {
     }
 
     private check(): void {
-        if (this.timeout || this.#queue.length === 0) {
+        if (this.timeout || this._queue.length === 0) {
             return;
         }
         if (this.lastReset + this.interval + this.tokenLimit * this.latencyRef.latency < Date.now()) {
@@ -36,11 +36,11 @@ export default class Bucket {
         let val: number;
         let tokensAvailable = this.tokens < this.tokenLimit;
         let unreservedTokensAvailable = this.tokens < (this.tokenLimit - this.reservedTokens);
-        while (this.#queue.length !== 0 && (unreservedTokensAvailable || (tokensAvailable && this.#queue[0].priority))) {
+        while (this._queue.length !== 0 && (unreservedTokensAvailable || (tokensAvailable && this._queue[0].priority))) {
             this.tokens++;
             tokensAvailable = this.tokens < this.tokenLimit;
             unreservedTokensAvailable = this.tokens < (this.tokenLimit - this.reservedTokens);
-            const item = this.#queue.shift();
+            const item = this._queue.shift();
             val = this.latencyRef.latency - Date.now() + this.lastSend;
             if (this.latencyRef.latency === 0 || val <= 0) {
                 item!.func();
@@ -53,7 +53,7 @@ export default class Bucket {
             }
         }
 
-        if (this.#queue.length !== 0 && !this.timeout) {
+        if (this._queue.length !== 0 && !this.timeout) {
             this.timeout = setTimeout(() => {
                 this.timeout = null;
                 this.check();
@@ -70,9 +70,9 @@ export default class Bucket {
      */
     queue(func: () => void, priority = false): void {
         if (priority) {
-            this.#queue.unshift({ func, priority });
+            this._queue.unshift({ func, priority });
         } else {
-            this.#queue.push({ func, priority });
+            this._queue.push({ func, priority });
         }
         this.check();
     }

@@ -8,14 +8,14 @@ import type User from "../structures/User";
 
 /** Various methods for interacting with users. Located at {@link Client#rest | Client#rest}{@link RESTManager#users | .users}. */
 export default class Users {
-    #manager: RESTManager;
+    private _manager: RESTManager;
     constructor(manager: RESTManager) {
-        this.#manager = manager;
+        this._manager = manager;
     }
 
     /** Alias for {@link REST/Channels#createDM | Channels#createDM}. */
     get createDM(): typeof Channels.prototype.createDM {
-        return this.#manager.channels.createDM.bind(this.#manager.channels);
+        return this._manager.channels.createDM.bind(this._manager.channels);
     }
 
     /**
@@ -25,18 +25,18 @@ export default class Users {
      */
     async editSelf(options: EditSelfUserOptions): Promise<ExtendedUser> {
         if (options.avatar) {
-            options.avatar = this.#manager.client.util._convertImage(options.avatar, "avatar");
+            options.avatar = this._manager.client.util._convertImage(options.avatar, "avatar");
         }
 
         if (options.banner) {
-            options.banner = this.#manager.client.util._convertImage(options.banner, "banner");
+            options.banner = this._manager.client.util._convertImage(options.banner, "banner");
         }
 
-        return this.#manager.authRequest<RawOAuthUser>({
+        return this._manager.authRequest<RawOAuthUser>({
             method: "PATCH",
             path:   Routes.USER("@me"),
             json:   options
-        }).then(data => new ExtendedUser(data, this.#manager.client));
+        }).then(data => new ExtendedUser(data, this._manager.client));
     }
 
     /**
@@ -46,10 +46,10 @@ export default class Users {
      * @caches {@link Client#users | Client#users}
      */
     async get(userID: string): Promise<User> {
-        return this.#manager.authRequest<RawUser>({
+        return this._manager.authRequest<RawUser>({
             method: "GET",
             path:   Routes.USER(userID)
-        }).then(data => this.#manager.client.users.update(data));
+        }).then(data => this._manager.client.users.update(data));
     }
 
     /**
@@ -58,7 +58,7 @@ export default class Users {
      * @caching This method **does not** cache its result.
      */
     async leaveGuild(guildID: string): Promise<void> {
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.OAUTH_GUILD(guildID)
         });

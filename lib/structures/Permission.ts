@@ -4,11 +4,11 @@ import type { JSONPermission } from "../types/json";
 
 /** Represents a permission. */
 export default class Permission {
+    private _json: Partial<Record<keyof typeof Permissions, boolean>> | undefined;
     /** The allowed permissions for this permission instance. */
     allow: bigint;
     /** The denied permissions for this permission instance. */
     deny: bigint;
-    #json: Partial<Record<keyof typeof Permissions, boolean>> | undefined;
     constructor(allow: bigint | string, deny: bigint | string = 0n) {
         this.allow = BigInt(allow);
         this.deny = BigInt(deny);
@@ -22,8 +22,8 @@ export default class Permission {
 
     /** A key-value map of permission to if it's been allowed or denied (not present if neither) */
     get json(): Partial<Record<keyof typeof Permissions, boolean>> {
-        if (this.#json) {
-            return this.#json;
+        if (this._json) {
+            return this._json;
         } else {
             const json: Partial<Record<keyof typeof Permissions, boolean>> = {};
             for (const perm of Object.keys(Permissions) as Array<keyof typeof Permissions>) {
@@ -34,7 +34,7 @@ export default class Permission {
                 }
             }
 
-            return (this.#json = json);
+            return (this._json = json);
         }
     }
 

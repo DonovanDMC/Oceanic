@@ -18,9 +18,9 @@ import type { Uncached } from "../types/shared";
 
 /** Various methods for interacting with webhooks. Located at {@link Client#rest | Client#rest}{@link RESTManager#webhooks | .webhooks}. */
 export default class Webhooks {
-    #manager: RESTManager;
+    private _manager: RESTManager;
     constructor(manager: RESTManager) {
-        this.#manager = manager;
+        this._manager = manager;
     }
 
     /**
@@ -35,9 +35,9 @@ export default class Webhooks {
             delete options.reason;
         }
         if (options.avatar) {
-            options.avatar = this.#manager.client.util._convertImage(options.avatar, "avatar");
+            options.avatar = this._manager.client.util._convertImage(options.avatar, "avatar");
         }
-        return this.#manager.authRequest<RawWebhook>({
+        return this._manager.authRequest<RawWebhook>({
             method: "POST",
             path:   Routes.CHANNEL_WEBHOOKS(channelID),
             json:   {
@@ -45,7 +45,7 @@ export default class Webhooks {
                 name:   options.name
             },
             reason
-        }).then(data => new Webhook(data, this.#manager.client));
+        }).then(data => new Webhook(data, this._manager.client));
     }
 
     /**
@@ -55,7 +55,7 @@ export default class Webhooks {
      * @caching This method **does not** cache its result.
      */
     async delete(webhookID: string, reason?: string): Promise<void> {
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.WEBHOOK(webhookID),
             reason
@@ -75,7 +75,7 @@ export default class Webhooks {
         if (options?.threadID !== undefined) {
             query.set("thread_id", options.threadID);
         }
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.WEBHOOK_MESSAGE(webhookID, token, messageID)
         });
@@ -88,7 +88,7 @@ export default class Webhooks {
      * @caching This method **does not** cache its result.
      */
     async deleteToken(webhookID: string, token: string): Promise<void> {
-        await this.#manager.authRequest<null>({
+        await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.WEBHOOK(webhookID, token)
         });
@@ -106,9 +106,9 @@ export default class Webhooks {
             delete options.reason;
         }
         if (options.avatar) {
-            options.avatar = this.#manager.client.util._convertImage(options.avatar, "avatar");
+            options.avatar = this._manager.client.util._convertImage(options.avatar, "avatar");
         }
-        return this.#manager.authRequest<RawWebhook>({
+        return this._manager.authRequest<RawWebhook>({
             method: "PATCH",
             path:   Routes.WEBHOOK(webhookID),
             json:   {
@@ -117,7 +117,7 @@ export default class Webhooks {
                 name:       options.name
             },
             reason
-        }).then(data => new Webhook(data, this.#manager.client));
+        }).then(data => new Webhook(data, this._manager.client));
     }
 
     /**
@@ -137,19 +137,19 @@ export default class Webhooks {
         if (options.threadID) {
             query.set("thread_id", options.threadID);
         }
-        return this.#manager.authRequest<RawMessage>({
+        return this._manager.authRequest<RawMessage>({
             method: "PATCH",
             path:   Routes.WEBHOOK_MESSAGE(webhookID, token, messageID),
             json:   {
-                allowed_mentions: this.#manager.client.util.formatAllowedMentions(options.allowedMentions),
+                allowed_mentions: this._manager.client.util.formatAllowedMentions(options.allowedMentions),
                 attachments:      options.attachments,
-                components:       options.components ? this.#manager.client.util.componentsToRaw(options.components) : undefined,
+                components:       options.components ? this._manager.client.util.componentsToRaw(options.components) : undefined,
                 content:          options.content,
-                embeds:           options.embeds ? this.#manager.client.util.embedsToRaw(options.embeds) : undefined
+                embeds:           options.embeds ? this._manager.client.util.embedsToRaw(options.embeds) : undefined
             },
             query,
             files
-        }).then(data => new Message<T>(data, this.#manager.client));
+        }).then(data => new Message<T>(data, this._manager.client));
     }
 
     /**
@@ -160,16 +160,16 @@ export default class Webhooks {
      */
     async editToken(webhookID: string, token: string, options: EditWebhookTokenOptions): Promise<Webhook> {
         if (options.avatar) {
-            options.avatar = this.#manager.client.util._convertImage(options.avatar, "avatar");
+            options.avatar = this._manager.client.util._convertImage(options.avatar, "avatar");
         }
-        return this.#manager.authRequest<RawWebhook>({
+        return this._manager.authRequest<RawWebhook>({
             method: "PATCH",
             path:   Routes.WEBHOOK(webhookID, token),
             json:   {
                 avatar: options.avatar,
                 name:   options.name
             }
-        }).then(data => new Webhook(data, this.#manager.client));
+        }).then(data => new Webhook(data, this._manager.client));
     }
 
     /**
@@ -193,17 +193,17 @@ export default class Webhooks {
         if (options.threadID !== undefined) {
             query.set("thread_id", options.threadID);
         }
-        return this.#manager.authRequest<RawMessage | null>({
+        return this._manager.authRequest<RawMessage | null>({
             method: "POST",
             path:   Routes.WEBHOOK(webhookID, token),
             query,
             json:   {
-                allowed_mentions: this.#manager.client.util.formatAllowedMentions(options.allowedMentions),
+                allowed_mentions: this._manager.client.util.formatAllowedMentions(options.allowedMentions),
                 attachments:      options.attachments,
                 avatar_url:       options.avatarURL,
-                components:       options.components ? this.#manager.client.util.componentsToRaw(options.components) : undefined,
+                components:       options.components ? this._manager.client.util.componentsToRaw(options.components) : undefined,
                 content:          options.content,
-                embeds:           options.embeds ? this.#manager.client.util.embedsToRaw(options.embeds) : undefined,
+                embeds:           options.embeds ? this._manager.client.util.embedsToRaw(options.embeds) : undefined,
                 flags:            options.flags,
                 poll:             options.poll,
                 thread_name:      options.threadName,
@@ -211,7 +211,7 @@ export default class Webhooks {
                 username:         options.username
             },
             files
-        }).then(res => res === null ? undefined : new Message(res, this.#manager.client));
+        }).then(res => res === null ? undefined : new Message(res, this._manager.client));
     }
 
     /**
@@ -228,12 +228,12 @@ export default class Webhooks {
         if (options.wait !== undefined) {
             query.set("wait", options.wait.toString());
         }
-        return this.#manager.authRequest<RawMessage | null>({
+        return this._manager.authRequest<RawMessage | null>({
             method: "POST",
             path:   Routes.WEBHOOK_PLATFORM(webhookID, token, "github"),
             query,
             json:   options
-        }).then(res => res === null ? undefined : new Message(res, this.#manager.client));
+        }).then(res => res === null ? undefined : new Message(res, this._manager.client));
     }
 
     /**
@@ -250,12 +250,12 @@ export default class Webhooks {
         if (options.wait !== undefined) {
             query.set("wait", options.wait.toString());
         }
-        return this.#manager.authRequest<RawMessage | null>({
+        return this._manager.authRequest<RawMessage | null>({
             method: "POST",
             path:   Routes.WEBHOOK_PLATFORM(webhookID, token, "slack"),
             query,
             json:   options
-        }).then(res => res === null ? undefined : new Message(res, this.#manager.client));
+        }).then(res => res === null ? undefined : new Message(res, this._manager.client));
     }
 
     /**
@@ -265,10 +265,10 @@ export default class Webhooks {
      * @caching This method **does not** cache its result.
      */
     async get(webhookID: string, token?: string): Promise<Webhook> {
-        return this.#manager.authRequest<RawWebhook>({
+        return this._manager.authRequest<RawWebhook>({
             method: "GET",
             path:   Routes.WEBHOOK(webhookID, token)
-        }).then(data => new Webhook(data, this.#manager.client));
+        }).then(data => new Webhook(data, this._manager.client));
     }
 
     /**
@@ -277,10 +277,10 @@ export default class Webhooks {
      * @caching This method **does not** cache its result.
      */
     async getForChannel(channelID: string): Promise<Array<Webhook>> {
-        return this.#manager.authRequest<Array<RawWebhook>>({
+        return this._manager.authRequest<Array<RawWebhook>>({
             method: "GET",
             path:   Routes.CHANNEL_WEBHOOKS(channelID)
-        }).then(data => data.map(d => new Webhook(d, this.#manager.client)));
+        }).then(data => data.map(d => new Webhook(d, this._manager.client)));
     }
 
     /**
@@ -289,10 +289,10 @@ export default class Webhooks {
      * @caching This method **does not** cache its result.
      */
     async getForGuild(guildID: string): Promise<Array<Webhook>> {
-        return this.#manager.authRequest<Array<RawWebhook>>({
+        return this._manager.authRequest<Array<RawWebhook>>({
             method: "GET",
             path:   Routes.GUILD_WEBHOOKS(guildID)
-        }).then(data => data.map(d => new Webhook(d, this.#manager.client)));
+        }).then(data => data.map(d => new Webhook(d, this._manager.client)));
     }
 
     /**
@@ -308,9 +308,9 @@ export default class Webhooks {
         if (threadID !== undefined) {
             query.set("thread_id", threadID);
         }
-        return this.#manager.authRequest<RawMessage>({
+        return this._manager.authRequest<RawMessage>({
             method: "GET",
             path:   Routes.WEBHOOK_MESSAGE(webhookID, token, messageID)
-        }).then(data => new Message<T>(data, this.#manager.client));
+        }).then(data => new Message<T>(data, this._manager.client));
     }
 }

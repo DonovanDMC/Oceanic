@@ -28,11 +28,11 @@ import { BASE_URL } from "../Constants";
 
 /** A helper to make using authenticated oauth requests without needing a new client instance. */
 export default class OAuthHelper {
-    #manager: RESTManager;
-    #token: string;
+    private _manager: RESTManager;
+    private _token: string;
     constructor(manager: RESTManager, token: string) {
-        this.#token = token;
-        this.#manager = manager;
+        this._token = token;
+        this._manager = manager;
     }
 
     /**
@@ -67,33 +67,33 @@ export default class OAuthHelper {
     }
 
     async addGuildMember(guildID: string, userID: string, options?: Omit<AddMemberOptions, "accessToken">): Promise<Member | undefined> {
-        return this.#manager.guilds.addMember(guildID, userID, { accessToken: this.#token.split(" ").slice(1).join(" "), ...options });
+        return this._manager.guilds.addMember(guildID, userID, { accessToken: this._token.split(" ").slice(1).join(" "), ...options });
     }
 
     /**
      * Get the current OAuth2 application's information.
      */
     async getApplication(): Promise<OAuthApplication> {
-        return this.#manager.request<RESTOAuthApplication>({
+        return this._manager.request<RESTOAuthApplication>({
             method: "GET",
             path:   Routes.OAUTH_APPLICATION,
-            auth:   this.#token
-        }).then(data => new OAuthApplication(data, this.#manager.client));
+            auth:   this._token
+        }).then(data => new OAuthApplication(data, this._manager.client));
     }
 
     /**
      * Get information about the current authorization.
      */
     async getCurrentAuthorizationInformation(): Promise<AuthorizationInformation> {
-        return this.#manager.request<RawAuthorizationInformation>({
+        return this._manager.request<RawAuthorizationInformation>({
             method: "GET",
             path:   Routes.OAUTH_INFO,
-            auth:   this.#token
+            auth:   this._token
         }).then(data => ({
-            application: new PartialApplication(data.application, this.#manager.client),
+            application: new PartialApplication(data.application, this._manager.client),
             expires:     new Date(data.expires),
             scopes:      data.scopes,
-            user:        this.#manager.client.users.update(data.user)
+            user:        this._manager.client.users.update(data.user)
         }));
     }
 
@@ -103,14 +103,14 @@ export default class OAuthHelper {
      * Note: Requires the `connections` scope.
      */
     async getCurrentConnections(): Promise<Array<Connection>> {
-        return this.#manager.request<Array<RawConnection>>({
+        return this._manager.request<Array<RawConnection>>({
             method: "GET",
             path:   Routes.OAUTH_CONNECTIONS,
-            auth:   this.#token
+            auth:   this._token
         }).then(data => data.map(connection => ({
             friendSync:   connection.friend_sync,
             id: 	         connection.id,
-            integrations: connection.integrations?.map(integration => new Integration(integration, this.#manager.client)),
+            integrations: connection.integrations?.map(integration => new Integration(integration, this._manager.client)),
             name:         connection.name,
             revoked:      connection.revoked,
             showActivity: connection.show_activity,
@@ -128,22 +128,22 @@ export default class OAuthHelper {
      * @param guild the ID of the guild
      */
     async getCurrentGuildMember(guild: string): Promise<Member> {
-        return this.#manager.request<RESTMember>({
+        return this._manager.request<RESTMember>({
             method: "GET",
             path:   Routes.OAUTH_GUILD_MEMBER(guild),
-            auth:   this.#token
-        }).then(data => new Member(data, this.#manager.client, guild));
+            auth:   this._token
+        }).then(data => new Member(data, this._manager.client, guild));
     }
 
     /**
      * Get the currently authenticated user's guilds. Note these are missing several properties gateway guilds have.
      */
     async getCurrentGuilds(): Promise<Array<OAuthGuild>> {
-        return this.#manager.request<Array<RawOAuthGuild>>({
+        return this._manager.request<Array<RawOAuthGuild>>({
             method: "GET",
             path:   Routes.OAUTH_GUILDS,
-            auth:   this.#token
-        }).then(data => data.map(d => new OAuthGuild(d, this.#manager.client)));
+            auth:   this._token
+        }).then(data => data.map(d => new OAuthGuild(d, this._manager.client)));
     }
 
     /**
@@ -152,11 +152,11 @@ export default class OAuthHelper {
      * Note: This does not touch the client's cache in any way.
      */
     async getCurrentUser(): Promise<ExtendedUser> {
-        return this.#manager.request<RawOAuthUser>({
+        return this._manager.request<RawOAuthUser>({
             method: "GET",
             path:   Routes.OAUTH_CURRENT_USER,
-            auth:   this.#token
-        }).then(data => new ExtendedUser(data, this.#manager.client));
+            auth:   this._token
+        }).then(data => new ExtendedUser(data, this._manager.client));
     }
 
 
@@ -168,8 +168,8 @@ export default class OAuthHelper {
         const form = new FormData();
         form.append("client_id", options.clientID);
         form.append("client_secret", options.clientSecret);
-        form.append("token", this.#token);
-        await this.#manager.authRequest<null>({
+        form.append("token", this._token);
+        await this._manager.authRequest<null>({
             method: "POST",
             path:   Routes.OAUTH_TOKEN_REVOKE,
             form
@@ -182,7 +182,7 @@ export default class OAuthHelper {
      * @param data The metadata to update.
      */
     async updateRoleConnection(applicationID: string, data: UpdateUserApplicationRoleConnectionOptions): Promise<RoleConnection> {
-        return this.#manager.request<RawRoleConnection>({
+        return this._manager.request<RawRoleConnection>({
             method: "PUT",
             path:   Routes.OAUTH_ROLE_CONNECTION(applicationID),
             json:   {
@@ -190,7 +190,7 @@ export default class OAuthHelper {
                 platform_name:     data.platformName,
                 platform_username: data.platformUsername
             },
-            auth: this.#token
+            auth: this._token
         }).then(d => ({
             metadata: Object.entries(d.metadata).map(([key, value]) => ({
                 [key]: {

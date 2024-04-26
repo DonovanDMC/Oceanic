@@ -71,10 +71,10 @@ import type Poll from "../structures/Poll";
 
 /** A general set of utilities. These are intentionally poorly documented, as they serve almost no usefulness to outside developers. */
 export default class Util {
-    #client: Client;
+    private _client: Client;
 
     constructor(client: Client) {
-        this.#client = client;
+        this._client = client;
     }
 
     static rawEmbeds(embeds: RawEmbed): Embed;
@@ -109,7 +109,7 @@ export default class Util {
 
     /** @hidden intended for internal use only */
     _getLimit(name: Exclude<keyof CollectionLimitsOptions, "users">, id?: string): number {
-        const opt = this.#client.options.collectionLimits[name];
+        const opt = this._client.options.collectionLimits[name];
         if (typeof opt === "number") {
             return opt;
         }
@@ -265,7 +265,7 @@ export default class Util {
             name:          raw.name,
             requireColons: raw.require_colons,
             roles:         raw.roles,
-            user:          raw.user ? this.#client.users.update(raw.user) : undefined
+            user:          raw.user ? this._client.users.update(raw.user) : undefined
         };
     }
 
@@ -312,14 +312,14 @@ export default class Util {
             sortValue:   raw.sort_value,
             tags:        raw.tags,
             type:        raw.type,
-            user:        raw.user ? this.#client.users.update(raw.user) : undefined
+            user:        raw.user ? this._client.users.update(raw.user) : undefined
         };
     }
 
     async detectMissingPrivilegedIntents(intents?: number): Promise<Array<PrivilegedIntentNames>> {
-        const application = this.#client["_application"] || await this.#client.rest.applications.getClient();
-        intents ??= this.#client.shards.options.intents;
-        this.#client["_application"] ??= application;
+        const application = this._client["_application"] || await this._client.rest.applications.getClient();
+        intents ??= this._client.shards.options.intents;
+        this._client["_application"] ??= application;
 
         const missing: Array<PrivilegedIntentNames> = [];
         const check = (intent: Intents, allowed: Array<ApplicationFlags>): void => {
@@ -412,7 +412,7 @@ export default class Util {
         const result: RawAllowedMentions = { parse: [] };
 
         if (!allowed) {
-            return this.formatAllowedMentions(this.#client.options.allowedMentions);
+            return this.formatAllowedMentions(this._client.options.allowedMentions);
         }
 
         if (allowed.everyone === true) {
@@ -440,10 +440,10 @@ export default class Util {
 
     formatImage(url: string, format?: ImageFormat, size?: number): string {
         if (!format || !ImageFormats.includes(format.toLowerCase() as ImageFormat)) {
-            format = url.includes("/a_") ? "gif" : this.#client.options.defaultImageFormat;
+            format = url.includes("/a_") ? "gif" : this._client.options.defaultImageFormat;
         }
         if (!size || !MEDIA_PROXY_SIZES.includes(size)) {
-            size = this.#client.options.defaultImageSize;
+            size = this._client.options.defaultImageSize;
         }
         return `${CDN_URL}${url}.${format}?size=${size}`;
     }
@@ -534,19 +534,19 @@ export default class Util {
         answerCount.count = count;
         if (users) {
             answerCount.users = users;
-            answerCount.meVoted = (this.#client["_user"] && users.includes(this.#client["_user"]?.id)) ?? false;
+            answerCount.meVoted = (this._client["_user"] && users.includes(this._client["_user"]?.id)) ?? false;
         }
     }
 
     updateChannel<T extends AnyChannel>(channelData: RawChannel): T {
         guild: if (channelData.guild_id) {
-            const guild = this.#client.guilds.get(channelData.guild_id);
+            const guild = this._client.guilds.get(channelData.guild_id);
             if (guild) {
                 if (ThreadChannelTypes.includes(channelData.type as typeof ThreadChannelTypes[number])) {
                     if (!channelData.parent_id) {
                         break guild;
                     }
-                    return (guild.threads.has(channelData.id) ? guild.threads.update(channelData as never) : (guild.threads as TypedCollection<RawAnnouncementThreadChannel | RawPublicThreadChannel | RawPrivateThreadChannel, AnyThreadChannel, []>).add(Channel.from<AnyThreadChannel>(channelData, this.#client))) as T;
+                    return (guild.threads.has(channelData.id) ? guild.threads.update(channelData as never) : (guild.threads as TypedCollection<RawAnnouncementThreadChannel | RawPublicThreadChannel | RawPrivateThreadChannel, AnyThreadChannel, []>).add(Channel.from<AnyThreadChannel>(channelData, this._client))) as T;
                 } else {
                     return guild.channels.update(channelData as RawGuildChannel) as T;
                 }
@@ -554,27 +554,27 @@ export default class Util {
         }
 
         switch (channelData.type) {
-            case ChannelTypes.DM: return this.#client.privateChannels.update(channelData as RawPrivateChannel) as T;
-            case ChannelTypes.GROUP_DM: return this.#client.groupChannels.update(channelData as RawGroupChannel) as T;
-            default: return Channel.from<T>(channelData, this.#client);
+            case ChannelTypes.DM: return this._client.privateChannels.update(channelData as RawPrivateChannel) as T;
+            case ChannelTypes.GROUP_DM: return this._client.groupChannels.update(channelData as RawGroupChannel) as T;
+            default: return Channel.from<T>(channelData, this._client);
         }
     }
 
     /** @internal */
     updateEntitlement<T extends Entitlement | TestEntitlement = Entitlement | TestEntitlement>(data: RawBaseEntitlement): T {
-        if (this.#client["_application"] === undefined) {
+        if (this._client["_application"] === undefined) {
             return "subscription_id" in data && data.subscription_id ?
-                new Entitlement(data as RawEntitlement, this.#client) as T :
-                new TestEntitlement(data as RawTestEntitlement, this.#client) as T;
+                new Entitlement(data as RawEntitlement, this._client) as T :
+                new TestEntitlement(data as RawTestEntitlement, this._client) as T;
         } else {
-            return this.#client.application.entitlements.update(data) as T;
+            return this._client.application.entitlements.update(data) as T;
         }
     }
 
     /** @internal */
     updateMember(guildID: string, memberID: string, member: RawMember | RESTMember): Member {
-        const guild = this.#client.guilds.get(guildID);
-        if (guild && this.#client["_user"] && this.#client.user.id === memberID) {
+        const guild = this._client.guilds.get(guildID);
+        if (guild && this._client["_user"] && this._client.user.id === memberID) {
             if (guild["_clientMember"]) {
                 guild["_clientMember"]["update"](member);
             } else {
@@ -582,17 +582,17 @@ export default class Util {
             }
             return guild["_clientMember"];
         }
-        return guild ? guild.members.update({ ...member, id: memberID }, guildID) : new Member({ ...member, id: memberID }, this.#client, guildID);
+        return guild ? guild.members.update({ ...member, id: memberID }, guildID) : new Member({ ...member, id: memberID }, this._client, guildID);
     }
 
     /** @internal */
     updateMessage<T extends AnyTextableChannel | Uncached>(data: RawMessage): Message<T> {
-        const channel = this.#client.getChannel(data.channel_id) as T | undefined;
+        const channel = this._client.getChannel(data.channel_id) as T | undefined;
         if (channel && "messages" in channel) {
             return channel.messages.update(data) as Message<T>;
         }
 
-        return new Message<T>(data, this.#client);
+        return new Message<T>(data, this._client);
     }
 
     /** @internal */
@@ -607,7 +607,7 @@ export default class Util {
                 count,
                 id:      answerID,
                 users:   user ? [user] : [],
-                meVoted: user === this.#client["_user"]?.id
+                meVoted: user === this._client["_user"]?.id
             };
             poll.results.answerCounts.push(answerCount);
             return;
@@ -617,10 +617,10 @@ export default class Util {
         if (user) {
             if (count === 1 && !answerCount.users.includes(user)) {
                 answerCount.users.push(user);
-                answerCount.meVoted = user === this.#client["_user"]?.id;
+                answerCount.meVoted = user === this._client["_user"]?.id;
             } else if (count === -1 && answerCount.users.includes(user)) {
                 answerCount.users.splice(answerCount.users.indexOf(user), 1);
-                if (user === this.#client["_user"]?.id) {
+                if (user === this._client["_user"]?.id) {
                     answerCount.meVoted = false;
                 }
             }
@@ -629,10 +629,10 @@ export default class Util {
 
     /** @internal */
     updateThread<T extends AnyThreadChannel>(threadData: RawThreadChannel): T {
-        const guild = this.#client.guilds.get(threadData.guild_id);
+        const guild = this._client.guilds.get(threadData.guild_id);
         if (guild) {
             return guild.threads.update(threadData) as T;
         }
-        return Channel.from<T>(threadData, this.#client);
+        return Channel.from<T>(threadData, this._client);
     }
 }
