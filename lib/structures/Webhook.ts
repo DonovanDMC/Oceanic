@@ -5,7 +5,7 @@ import type Message from "./Message";
 import type Guild from "./Guild";
 import type ClientApplication from "./ClientApplication";
 import type Client from "../Client";
-import { BASE_URL, type ImageFormat, type WebhookTypes } from "../Constants";
+import { API_URL, type ImageFormat, type WebhookTypes } from "../Constants";
 import * as Routes from "../util/Routes";
 import type { AnyTextableGuildChannel, RawChannel } from "../types/channels";
 import type { RawGuild } from "../types/guilds";
@@ -93,7 +93,7 @@ export default class Webhook extends Base {
     }
 
     get url(): string {
-        return `${BASE_URL}${Routes.WEBHOOK(this.id, this.token)}`;
+        return `${API_URL}${Routes.WEBHOOK(this.id, this.token)}`;
     }
 
     /**
