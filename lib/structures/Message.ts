@@ -36,7 +36,8 @@ import type {
     AnyThreadChannel,
     RoleSubscriptionData,
     MessageInteractionMetadata,
-    GetPollAnswerUsersOptions
+    GetPollAnswerUsersOptions,
+    MessageSnapshot
 } from "../types/channels";
 import type { RawMember } from "../types/guilds";
 import type { DeleteWebhookMessageOptions, EditWebhookMessageOptions } from "../types/webhooks";
@@ -106,6 +107,8 @@ export default class Message<T extends AnyTextableChannel | Uncached = AnyTextab
     };
     /** If this message is a `REPLY` or `THREAD_STARTER_MESSAGE`, some info about the referenced message. */
     messageReference?: MessageReference;
+    /** A snapshot of the forwarded message. */
+    messageSnapshots?: Array<MessageSnapshot>;
     /** A nonce for ensuring a message was sent. */
     nonce?: number | string;
     /** If this message is pinned. */
@@ -266,8 +269,27 @@ export default class Message<T extends AnyTextableChannel | Uncached = AnyTextab
                 channelID:       data.message_reference.channel_id,
                 failIfNotExists: data.message_reference.fail_if_not_exists,
                 guildID:         data.message_reference.guild_id,
-                messageID:       data.message_reference.message_id
+                messageID:       data.message_reference.message_id,
+                type:            data.message_reference.type
             };
+        }
+
+        if (data.message_snapshots) {
+            this.messageSnapshots = data.message_snapshots.map(snap => {
+                const attachments = new TypedCollection(Attachment, this.client);
+                snap.message.attachments.map(a => attachments.update(a));
+                return {
+                    guildID: snap.guild_id,
+                    message: {
+                        attachments,
+                        content:         snap.message.content,
+                        editedTimestamp: snap.message.edited_timestamp ? new Date(snap.message.edited_timestamp) : null,
+                        embeds:          snap.message.embeds,
+                        flags:           snap.message.flags ?? 0,
+                        timestamp:       new Date(snap.message.timestamp)
+                    }
+                };
+            });
         }
 
         if (data.nonce !== undefined) {
@@ -524,7 +546,18 @@ export default class Message<T extends AnyTextableChannel | Uncached = AnyTextab
                 roles:    this.mentions.roles,
                 users:    this.mentions.users.map(user => user.toJSON())
             },
-            messageReference:  this.messageReference,
+            messageReference: this.messageReference,
+            messageSnapshots: this.messageSnapshots?.map(snap => ({
+                guildID: snap.guildID,
+                message: {
+                    attachments:     snap.message.attachments.map(attachment => attachment.toJSON()),
+                    content:         snap.message.content,
+                    editedTimestamp: snap.message.editedTimestamp?.getTime() ?? null,
+                    embeds:          snap.message.embeds,
+                    flags:           snap.message.flags,
+                    timestamp:       snap.message.timestamp.getTime()
+                }
+            })),
             nonce:             this.nonce,
             pinned:            this.pinned,
             position:          this.position,

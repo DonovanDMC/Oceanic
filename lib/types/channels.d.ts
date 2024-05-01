@@ -40,7 +40,8 @@ import type {
     ImplementedChannelTypes,
     ThreadOnlyChannelTypes,
     ReactionType,
-    PollLayoutType
+    PollLayoutType,
+    MessageReferenceType
 } from "../Constants";
 import type Member from "../structures/Member";
 import type AnnouncementChannel from "../structures/AnnouncementChannel";
@@ -308,7 +309,7 @@ export interface CreateMessageOptions {
     files?: Array<File>;
     /** The [flags](https://discord.com/developers/docs/resources/channel#message-object-message-flags) to send with the message. */
     flags?: number;
-    /** Reply to a message. */
+    /** Set to reply to a message, or forward a message. */
     messageReference?: MessageReference;
     /** A unique number or string used to dedupe this message. `enforceNonce` must be set to true for Discord to dedupe message sends. */
     nonce?: string | number;
@@ -479,6 +480,14 @@ export interface MessageReference {
     guildID?: string;
     /** The ID of the message to reply to. */
     messageID?: string;
+    /** The type of this message reference. */
+    type: MessageReferenceType;
+}
+
+export interface MessageSnapshotMessage extends Pick<Message, "content" | "embeds" | "attachments" | "timestamp" | "editedTimestamp" | "flags"> {}
+export interface MessageSnapshot {
+    guildID?: string;
+    message: MessageSnapshotMessage;
 }
 
 export type RawComponent = RawMessageComponent | RawModalComponent;
@@ -692,6 +701,7 @@ export interface RawMessage {
     mention_roles: Array<string>;
     mentions: Array<RawUserWithMember>;
     message_reference?: RawMessageReference;
+    message_snapshots?: Array<RawMessageSnapshot>;
     nonce?: number | string;
     pinned: boolean;
     poll?: RawPoll;
@@ -749,6 +759,12 @@ export interface RawMessageReference {
     fail_if_not_exists: boolean;
     guild_id: string;
     message_id: string;
+    type: MessageReferenceType;
+}
+
+export interface RawMessageSnapshot {
+    guild_id?: string;
+    message: Pick<RawMessage, "content" | "embeds" | "attachments" | "timestamp" | "edited_timestamp" | "flags">;
 }
 
 export interface RawMessageInteraction {

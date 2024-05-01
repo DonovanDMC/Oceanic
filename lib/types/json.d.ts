@@ -455,7 +455,7 @@ export interface JSONMessage extends JSONBase {
     content: string;
     editedTimestamp: number | null;
     embeds: Array<Embed>;
-    flags?: number;
+    flags: number;
     guildID?: string;
     interaction?: {
         id: string;
@@ -490,6 +490,17 @@ export interface JSONMessage extends JSONBase {
         users: Array<JSONUser>;
     };
     messageReference?: MessageReference;
+    messageSnapshots?: Array<{
+        guildID?: string;
+        message: {
+            attachments: Array<JSONAttachment>;
+            content: string;
+            editedTimestamp: number | null;
+            embeds: Array<Embed>;
+            flags: number;
+            timestamp: number;
+        };
+    }>;
     nonce?: number | string;
     pinned: boolean;
     position?: number;

@@ -1343,6 +1343,11 @@ export enum RoleFlags {
     IN_PROMPT = 1 << 0,
 }
 
+export enum MessageReferenceType {
+    DEFAULT = 0,
+    FORWARD = 1,
+}
+
 /* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 // entries are intentionally not aligned
 /** The error codes that can be received. See [Discord's Documentation](https://discord.com/developers/docs/topics/opcodes-and-status-codes#json). */
