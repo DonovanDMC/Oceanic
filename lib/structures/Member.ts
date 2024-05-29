@@ -130,7 +130,7 @@ export default class Member extends Base {
 
     /** The nick of this member if set, the display name of this member's user if set, or their username. */
     get displayName(): string {
-        return this.nick ?? this.user.globalName ?? this.username;
+        return this.nick ?? this.user.name;
     }
 
     /** The guild this member is for. This will throw an error if the guild is not cached. */

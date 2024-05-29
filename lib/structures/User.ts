@@ -90,6 +90,11 @@ export default class User extends Base {
         return `<@${this.id}>`;
     }
 
+    /** The display name of this user if set, or their username. */
+    get name(): string {
+        return this.globalName ?? this.username;
+    }
+
     /** This user's unique username, if migrated, else a combination of the user's username and discriminator. */
     get tag(): string {
         if (this.isMigrated) {
