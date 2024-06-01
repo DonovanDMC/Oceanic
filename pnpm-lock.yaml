@@ -66,8 +66,8 @@ devDependencies:
     specifier: ^52.0.0
     version: 52.0.0(eslint@8.57.0)
   eslint-plugin-unused-imports:
-    specifier: ^3.1.0
-    version: 3.1.0(@typescript-eslint/eslint-plugin@7.0.0)(eslint@8.57.0)
+    specifier: ^3.2.0
+    version: 3.2.0(@typescript-eslint/eslint-plugin@7.0.0)(eslint@8.57.0)
   rimraf:
     specifier: ^5.0.5
     version: 5.0.5
@@ -1187,8 +1187,8 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-plugin-unused-imports@3.1.0(@typescript-eslint/eslint-plugin@7.0.0)(eslint@8.57.0):
-    resolution: {integrity: sha512-9l1YFCzXKkw1qtAru1RWUtG2EVDZY0a0eChKXcL+EZ5jitG7qxdctu4RnvhOJHv4xfmUf7h+JJPINlVpGhZMrw==}
+  /eslint-plugin-unused-imports@3.2.0(@typescript-eslint/eslint-plugin@7.0.0)(eslint@8.57.0):
+    resolution: {integrity: sha512-6uXyn6xdINEpxE1MtDjxQsyXB37lfyO2yKGVVgtD7WEWQGORSOZjgrD6hBhvGv4/SO+TOlS+UnC6JppRqbuwGQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
       '@typescript-eslint/eslint-plugin': 6 - 7
