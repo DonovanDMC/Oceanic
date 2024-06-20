@@ -237,7 +237,7 @@ export default class ModalSubmitInteraction<T extends AnyInteractionChannel | Un
 
     /**
      * Show a "premium required" response to the user. This is an initial response, and more than one initial response cannot be used.
-     * @deprecated The PREMIUM_REQUIRED (10) interaction response type is now deprecated in favor of using custom premium buttons.
+     * @deprecated The {@link Constants~InteractionTypes.PREMIUM_REQUIRED | PREMIUM_REQUIRED} interaction response type is now deprecated in favor of using {@link Types/Channels~PremiumButton | custom premium buttons}.
      */
     async premiumRequired(): Promise<void> {
         if (this.acknowledged) {
