@@ -768,6 +768,7 @@ export enum ButtonStyles {
     SUCCESS   = 3,
     DANGER    = 4,
     LINK      = 5,
+    PREMIUM   = 6,
 }
 
 export enum TextInputStyles {
@@ -1052,6 +1053,7 @@ export enum InteractionResponseTypes {
     UPDATE_MESSAGE                          = 7,
     APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 8,
     MODAL                                   = 9,
+    /** @deprecated */
     PREMIUM_REQUIRED                        = 10,
 }
 

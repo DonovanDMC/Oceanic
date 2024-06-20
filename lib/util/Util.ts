@@ -131,14 +131,25 @@ export default class Util {
     componentToParsed<T extends RawComponent>(component: T): ToComponentFromRaw<T> {
         switch (component.type) {
             case ComponentTypes.BUTTON: {
-                return (component.style === ButtonStyles.LINK ? component : {
+                if (component.style === ButtonStyles.LINK) return component as never;
+
+                if (component.style === ButtonStyles.PREMIUM) {
+                    return {
+                        disabled: component.disabled,
+                        skuID:    component.sku_id,
+                        style:    component.style,
+                        type:     component.type
+                    } as never;
+                }
+
+                return {
                     customID: component.custom_id,
                     disabled: component.disabled,
                     emoji:    component.emoji,
                     label:    component.label,
                     style:    component.style,
                     type:     component.type
-                }) as never;
+                } as never;
             }
             case ComponentTypes.TEXT_INPUT: {
                 return {
@@ -188,14 +199,25 @@ export default class Util {
     componentToRaw<T extends Component>(component: T): ToRawFromComponent<T> {
         switch (component.type) {
             case ComponentTypes.BUTTON: {
-                return (component.style === ButtonStyles.LINK ? component : {
+                if (component.style === ButtonStyles.LINK) return component as never;
+
+                if (component.style === ButtonStyles.PREMIUM) {
+                    return {
+                        disabled: component.disabled,
+                        sku_id:   component.skuID,
+                        style:    component.style,
+                        type:     component.type
+                    } as never;
+                }
+
+                return {
                     custom_id: component.customID,
                     disabled:  component.disabled,
                     emoji:     component.emoji,
                     label:     component.label,
                     style:     component.style,
                     type:      component.type
-                }) as never;
+                } as never;
             }
             case ComponentTypes.TEXT_INPUT: {
                 return {

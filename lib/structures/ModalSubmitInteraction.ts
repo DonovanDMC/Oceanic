@@ -235,7 +235,10 @@ export default class ModalSubmitInteraction<T extends AnyInteractionChannel | Un
         return this.guildID === null;
     }
 
-    /** Show a "premium required" response to the user. This is an initial response, and more than one initial response cannot be used. */
+    /**
+     * Show a "premium required" response to the user. This is an initial response, and more than one initial response cannot be used.
+     * @deprecated The PREMIUM_REQUIRED (10) interaction response type is now deprecated in favor of using custom premium buttons.
+     */
     async premiumRequired(): Promise<void> {
         if (this.acknowledged) {
             throw new TypeError("Interactions cannot have more than one initial response.");

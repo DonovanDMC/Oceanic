@@ -484,7 +484,7 @@ export interface MessageReference {
 export type RawComponent = RawMessageComponent | RawModalComponent;
 export type RawMessageComponent = RawButtonComponent | RawSelectMenuComponent;
 export type RawModalComponent = RawTextInput;
-export type RawButtonComponent = RawTextButton | URLButton;
+export type RawButtonComponent = RawTextButton | URLButton | RawPremiumButton;
 export type RawSelectMenuComponent = RawStringSelectMenu | RawUserSelectMenu | RawRoleSelectMenu | RawMentionableSelectMenu | RawChannelSelectMenu;
 export type ToComponentFromRaw<T extends RawComponent> =
     T extends RawTextButton ? TextButton :
@@ -520,7 +520,7 @@ T extends MessageActionRow ? RawMessageActionRow :
 export type Component = MessageComponent | ModalComponent;
 export type MessageComponent = ButtonComponent | SelectMenuComponent;
 export type ModalComponent = TextInput;
-export type ButtonComponent = TextButton | URLButton;
+export type ButtonComponent = TextButton | URLButton | PremiumButton;
 export type SelectMenuComponent = StringSelectMenu | UserSelectMenu | RoleSelectMenu | MentionableSelectMenu | ChannelSelectMenu;
 
 export interface ActionRowBase<T extends Component> {
@@ -552,6 +552,16 @@ export interface TextButton extends ButtonBase {
 export interface URLButton extends ButtonBase {
     style: ButtonStyles.LINK;
     url: string;
+}
+
+export interface RawPremiumButton extends Omit<ButtonBase, "label" | "emoji"> {
+    sku_id: string;
+    style: ButtonStyles.PREMIUM;
+}
+
+export interface PremiumButton extends Omit<ButtonBase, "label" | "emoji"> {
+    skuID: string;
+    style: ButtonStyles.PREMIUM;
 }
 
 export interface RawSelectMenuBase<T extends SelectMenuTypes> {
