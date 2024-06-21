@@ -1270,6 +1270,8 @@ export enum AttachmentFlags {
 }
 
 export enum SKUTypes {
+    DURABLE            = 2,
+    CONSUMABLE         = 3,
     SUBSCRIPTION       = 5,
     SUBSCRIPTION_GROUP = 6,
 }
