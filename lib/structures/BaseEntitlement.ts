@@ -28,6 +28,11 @@ export default class BaseEntitlement extends Base {
         this.userID = data.user_id;
     }
 
+    /** Mark this entitlement as consumed. */
+    async consume(): Promise<void> {
+        return this.client.rest.applications.consumeEntitlement(this.applicationID, this.id);
+    }
+
     override toJSON(): JSONBaseEntitlement {
         return {
             ...super.toJSON(),

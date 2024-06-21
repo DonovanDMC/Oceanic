@@ -147,6 +147,7 @@ export const INTERACTION_CALLBACK                  = (interactionID: string, int
 export const APPLICATION                           = "/applications/@me";
 export const ENTITLEMENTS                          = (applicationID: string) => encode`/applications/${applicationID}/entitlements`;
 export const ENTITLEMENT                           = (applicationID: string, entitlementID: string) => encode`/applications/${applicationID}/entitlements/${entitlementID}`;
+export const CONSUME_ENTITLEMENT                   = (applicationID: string, entitlementID: string) => encode`/applications/${applicationID}/entitlements/${entitlementID}/consume`;
 export const SKUS                                  = (applicationID: string) => encode`/applications/${applicationID}/skus`;
 
 // Misc

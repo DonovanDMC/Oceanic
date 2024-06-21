@@ -74,6 +74,14 @@ export default class ClientApplication extends Base {
     }
 
     /**
+     * Mark an entitlement as consumed.
+     * @param entitlementID The ID of the entitlement to consume.
+     */
+    async consumeEntitlement(entitlementID: string): Promise<void> {
+        return this.client.rest.applications.consumeEntitlement(this.id, entitlementID);
+    }
+
+    /**
      * Create a global application command.
      * @param options The options for creating the command.
      */

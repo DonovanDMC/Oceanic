@@ -92,6 +92,18 @@ export default class Applications {
     }
 
     /**
+     * Mark an entitlement as consumed.
+     * @param applicationID The ID of the application to the entitlement is for.
+     * @param entitlementID The ID of the entitlement to consume.
+     */
+    async consumeEntitlement(applicationID: string, entitlementID: string): Promise<void> {
+        await this._manager.authRequest<void>({
+            method: "POST",
+            path:   Routes.CONSUME_ENTITLEMENT(applicationID, entitlementID)
+        });
+    }
+
+    /**
      * Create a global application command.
      * @param applicationID The ID of the application.
      * @param options The options for the command.
