@@ -159,6 +159,7 @@ export interface JSONAttachment extends JSONBase {
     height?: number;
     proxyURL: string;
     size: number;
+    title?: string;
     url: string;
     width?: number;
 }

@@ -24,6 +24,8 @@ export default class Attachment extends Base {
     proxyURL: string;
     /** The size of this attachment. */
     size: number;
+    /** The title of this attachment. */
+    title?: string;
     /** The source url of this attachment. */
     url: string;
     /** Base64 encoded bytearray representing a sampled waveform for voice messages. */
@@ -57,6 +59,7 @@ export default class Attachment extends Base {
             height:      this.height,
             proxyURL:    this.proxyURL,
             size:        this.size,
+            title:       this.title,
             url:         this.url,
             width:       this.width
         };

@@ -662,6 +662,7 @@ export interface RawAttachment {
     id: string;
     proxy_url: string;
     size: number;
+    title?: string;
     url: string;
     waveform?: string | null;
     width?: number;
