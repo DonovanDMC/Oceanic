@@ -895,7 +895,8 @@ export enum StageInstancePrivacyLevels {
 }
 
 export enum AutoModerationEventTypes {
-    MESSAGE_SEND = 1,
+    MESSAGE_SEND  = 1,
+    MEMBER_UPDATE = 2,
 }
 
 export enum AutoModerationTriggerTypes {
