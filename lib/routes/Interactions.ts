@@ -47,7 +47,16 @@ export default class Interactions {
                     content:          options.data.content,
                     components:       options.data.components ? this._manager.client.util.componentsToRaw(options.data.components) : undefined,
                     embeds:           options.data.embeds ? this._manager.client.util.embedsToRaw(options.data.embeds) : undefined,
-                    flags:            options.data.flags
+                    flags:            options.data.flags,
+                    poll:             options.data.poll ? {
+                        allow_multiselect: options.data.poll.allowMultiselect,
+                        answers:           options.data.poll.answers.map(a => ({
+                            poll_media: a.pollMedia
+                        })),
+                        duration:    options.data.poll.duration,
+                        layout_type: options.data.poll.layoutType,
+                        question:    options.data.poll.question
+                    } : undefined
                 };
                 break;
             }

@@ -205,10 +205,18 @@ export default class Webhooks {
                 content:          options.content,
                 embeds:           options.embeds ? this._manager.client.util.embedsToRaw(options.embeds) : undefined,
                 flags:            options.flags,
-                poll:             options.poll,
-                thread_name:      options.threadName,
-                tts:              options.tts,
-                username:         options.username
+                poll:             options.poll ? {
+                    allow_multiselect: options.poll.allowMultiselect,
+                    answers:           options.poll.answers.map(a => ({
+                        poll_media: a.pollMedia
+                    })),
+                    duration:    options.poll.duration,
+                    layout_type: options.poll.layoutType,
+                    question:    options.poll.question
+                } : undefined,
+                thread_name: options.threadName,
+                tts:         options.tts,
+                username:    options.username
             },
             files
         }).then(res => res === null ? undefined : new Message(res, this._manager.client));
