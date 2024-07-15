@@ -1,5 +1,6 @@
 /** @module ShardManager */
 import Shard from "./Shard";
+import Dispatcher from "./Dispatcher";
 import type Client from "../Client";
 import {
     AllIntents,
@@ -24,16 +25,16 @@ try {
 /** A manager for all the client's shards. */
 export default class ShardManager extends Collection<number, Shard> {
     private _buckets: Record<number, number>;
-    private _client: Client;
     private _connectQueue: Array<Shard>;
     private _connectTimeout: NodeJS.Timeout | null;
     private _gatewayURL?: string;
+    client!: Client;
     connected = false;
+    dispatcher!: Dispatcher;
     options: ShardManagerInstanceOptions;
     constructor(client: Client, options: GatewayOptions = {}) {
         super();
         this._buckets = {};
-        this._client = client;
         this._connectQueue = [];
         this._connectTimeout = null;
         this.options = {
@@ -66,11 +67,12 @@ export default class ShardManager extends Collection<number, Shard> {
                 afk:		      options.presence?.afk ?? false,
                 status:		   options.presence?.status ?? "online"
             },
-            reconnectDelay:          options.reconnectDelay ?? ((lastDelay, attempts): number => Math.pow(attempts + 1, 0.7) * 20000),
-            removeDisallowedIntents: options.removeDisallowedIntents ?? false,
-            seedVoiceConnections:    options.seedVoiceConnections ?? false,
-            shardIDs:                options.shardIDs ?? [],
-            ws:                      options.ws ?? {}
+            reconnectDelay:             options.reconnectDelay ?? ((lastDelay, attempts): number => Math.pow(attempts + 1, 0.7) * 20000),
+            removeDisallowedIntents:    options.removeDisallowedIntents ?? false,
+            seedVoiceConnections:       options.seedVoiceConnections ?? false,
+            shardIDs:                   options.shardIDs ?? [],
+            useDefaultDispatchHandlers: options.useDefaultDispatchHandlers ?? true,
+            ws:                         options.ws ?? {}
         };
         this.options.override.appendQuery ??= (this.options.override.getBot === undefined && this.options.override.url === undefined);
         this.options.override.gatewayURLIsResumeURL ??= (this.options.override.getBot !== undefined || this.options.override.url !== undefined);
@@ -99,7 +101,7 @@ export default class ShardManager extends Collection<number, Shard> {
                             bitmask = AllNonPrivilegedIntents;
                             continue;
                         }
-                        this._client.emit("warn", `Unknown intent: ${intent}`);
+                        this.client.emit("warn", `Unknown intent: ${intent}`);
                     }
                 }
 
@@ -112,6 +114,20 @@ export default class ShardManager extends Collection<number, Shard> {
         if (this.options.getAllUsers && !(this.options.intents & Intents.GUILD_MEMBERS)) {
             throw new TypeError("Guild members cannot be requested without the GUILD_MEMBERS intent");
         }
+        Object.defineProperties(this, {
+            client: {
+                value:        client,
+                writable:     false,
+                enumerable:   false,
+                configurable: false
+            },
+            dispatcher: {
+                value:        new Dispatcher(this),
+                writable:     false,
+                enumerable:   false,
+                configurable: false
+            }
+        });
 
     }
 
@@ -124,7 +140,7 @@ export default class ShardManager extends Collection<number, Shard> {
         if (this.options.maxShards === -1) {
             return undefined;
         }
-        return this.get((this._client.guildShardMap[guild] ??= Number((BigInt(guild) >> 22n) % BigInt(this.options.maxShards))));
+        return this.get((this.client.guildShardMap[guild] ??= Number((BigInt(guild) >> 22n) % BigInt(this.options.maxShards))));
     }
 
     private async _gatewayURLForShard(shard: Shard): Promise<string> {
@@ -137,7 +153,7 @@ export default class ShardManager extends Collection<number, Shard> {
         }
 
         // how did we manage to get all the way to connecting without gatewayURL being set?
-        return (this._gatewayURL = (await (this.options.override.getBot?.() ?? this._client.rest.getBotGateway())).url);
+        return (this._gatewayURL = (await (this.options.override.getBot?.() ?? this.client.rest.getBotGateway())).url);
     }
 
     private _ready(id: number): void {
@@ -160,10 +176,10 @@ export default class ShardManager extends Collection<number, Shard> {
         const overrideURL = (this.options.override.getBot || this.options.override.url) !== undefined;
         try {
             if (this.options.maxShards === -1 || this.options.concurrency === -1) {
-                data = await (this.options.override.getBot?.() ?? this._client.rest.getBotGateway());
+                data = await (this.options.override.getBot?.() ?? this.client.rest.getBotGateway());
                 url = data.url;
             } else {
-                url = overrideURL ? null : (await this._client.rest.getGateway()).url;
+                url = overrideURL ? null : (await this.client.rest.getGateway()).url;
             }
         } catch (err) {
             throw new TypeError("Failed to get gateway information.", { cause: err as Error });
@@ -179,10 +195,10 @@ export default class ShardManager extends Collection<number, Shard> {
 
         /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
         if (this.options.removeDisallowedIntents && PrivilegedIntentMapping.some(([intent]) => (this.options.intents & intent) === intent)) {
-            const { flags } = await this._client.rest.applications.getCurrent();
+            const { flags } = await this.client.rest.applications.getCurrent();
             const check = (intent: Intents, allowed: Array<ApplicationFlags>): void => {
                 if ((this.options.intents & intent) === intent && !allowed.some(flag => (flags & flag) === flag)) {
-                    this._client.emit("warn", `removeDisallowedIntents is enabled, and ${Intents[intent]} was included but not found to be allowed. It has been removed.`);
+                    this.client.emit("warn", `removeDisallowedIntents is enabled, and ${Intents[intent]} was included but not found to be allowed. It has been removed.`);
                     this.options.intents &= ~intent;
                 }
             };
@@ -238,7 +254,7 @@ export default class ShardManager extends Collection<number, Shard> {
             this.connected = false;
         }
 
-        this._client.ready = false;
+        this.client.ready = false;
         for (const [,shard] of this) shard.disconnect(reconnect);
         this._resetConnectQueue();
     }
@@ -246,12 +262,12 @@ export default class ShardManager extends Collection<number, Shard> {
     spawn(id: number): void {
         let shard = this.get(id);
         if (!shard) {
-            shard = new Shard(id, this._client);
+            shard = new Shard(id, this);
             this.set(id, shard);
             shard
                 .on("ready", () => {
-                    this._client.emit("shardReady", id);
-                    if (this._client.ready) {
+                    this.client.emit("shardReady", id);
+                    if (this.client.ready) {
                         return;
                     }
                     for (const other of this.values()) {
@@ -260,13 +276,13 @@ export default class ShardManager extends Collection<number, Shard> {
                         }
                     }
 
-                    this._client.ready = true;
-                    this._client.startTime = Date.now();
-                    this._client.emit("ready");
+                    this.client.ready = true;
+                    this.client.startTime = Date.now();
+                    this.client.emit("ready");
                 })
                 .on("resume", () => {
-                    this._client.emit("shardResume", id);
-                    if (this._client.ready) {
+                    this.client.emit("shardResume", id);
+                    if (this.client.ready) {
                         return;
                     }
                     for (const other of this.values()) {
@@ -275,24 +291,24 @@ export default class ShardManager extends Collection<number, Shard> {
                         }
                     }
 
-                    this._client.ready = true;
-                    this._client.startTime = Date.now();
-                    this._client.emit("ready");
+                    this.client.ready = true;
+                    this.client.startTime = Date.now();
+                    this.client.emit("ready");
                 })
                 .on("disconnect", error => {
-                    this._client.emit("shardDisconnect", error, id);
+                    this.client.emit("shardDisconnect", error, id);
                     for (const other of this.values()) {
                         if (other.ready) {
                             return;
                         }
                     }
 
-                    this._client.ready = false;
-                    this._client.startTime = 0;
-                    this._client.emit("disconnect");
+                    this.client.ready = false;
+                    this.client.startTime = 0;
+                    this.client.emit("disconnect");
                 })
                 .on("preReady", () => {
-                    this._client.emit("shardPreReady", id);
+                    this.client.emit("shardPreReady", id);
                 });
         }
 

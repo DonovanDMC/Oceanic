@@ -22,6 +22,8 @@ const Collection = (await import("./dist/lib/util/Collection.js")).default.defau
 const ComponentInteraction = (await import("./dist/lib/structures/ComponentInteraction.js")).default.default;
 const DiscordHTTPError = (await import("./dist/lib/rest/DiscordHTTPError.js")).default.default;
 const DiscordRESTError = (await import("./dist/lib/rest/DiscordRESTError.js")).default.default;
+const Dispatcher = (await import("./dist/lib/gateway/Dispatcher.js")).default.default;
+const DefaultDispatchEvents = (await import("./dist/lib/gateway/events.js")).default;
 const Errors = (await import("./dist/lib/util/Errors.js")).default;
 const Entitlement = (await import("./dist/lib/structures/Entitlement.js")).default.default;
 const ExtendedUser = (await import("./dist/lib/structures/ExtendedUser.js")).default.default;
@@ -109,6 +111,8 @@ export {
     ComponentInteraction,
     DiscordHTTPError,
     DiscordRESTError,
+    Dispatcher,
+    DefaultDispatchEvents,
     Errors,
     Entitlement,
     ExtendedUser,

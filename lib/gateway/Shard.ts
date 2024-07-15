@@ -1,61 +1,25 @@
 /** @module Shard */
+import type ShardManager from "./ShardManager";
 import type Client from "../Client";
 import TypedEmitter from "../util/TypedEmitter";
 import Bucket from "../rest/Bucket";
-import {
-    ChannelTypes,
-    GatewayCloseCodes,
-    GatewayOPCodes,
-    GATEWAY_VERSION,
-    Intents
-} from "../Constants";
+import { GatewayCloseCodes, GatewayOPCodes, GATEWAY_VERSION, Intents } from "../Constants";
 import type {
     UpdatePresenceOptions,
     RequestGuildMembersOptions,
     UpdateVoiceStateOptions,
-    PresenceUpdate,
     SendStatuses,
     BotActivity,
     ShardStatus
 } from "../types/gateway";
-import Member from "../structures/Member";
+import type Member from "../structures/Member";
 import Base from "../structures/Base";
-import type { AnyDispatchPacket, AnyReceivePacket } from "../types/gateway-raw";
+import type {  AnyReceivePacket, ReadyPacket } from "../types/gateway-raw";
 import type { RawOAuthUser, RawUser } from "../types/users";
 import type { RawGuild } from "../types/guilds";
 import ExtendedUser from "../structures/ExtendedUser";
-import AutoModerationRule from "../structures/AutoModerationRule";
-import Channel from "../structures/Channel";
-import type {
-    AnyGuildChannelWithoutThreads,
-    AnyTextableChannel,
-    AnyThreadChannel,
-    AnyInviteChannel,
-    PossiblyUncachedInvite,
-    RawMessage,
-    ThreadMember,
-    ThreadParentChannel,
-    UncachedThreadMember,
-    AnyVoiceChannel,
-    PollAnswer,
-    AnyGuildChannel
-} from "../types/channels";
-import type { JSONAnnouncementThreadChannel } from "../types/json";
-import VoiceChannel from "../structures/VoiceChannel";
-import StageChannel from "../structures/StageChannel";
-import GuildScheduledEvent from "../structures/GuildScheduledEvent";
-import Invite from "../structures/Invite";
-import Message from "../structures/Message";
-import StageInstance from "../structures/StageInstance";
-import type AnnouncementThreadChannel from "../structures/AnnouncementThreadChannel";
-import Interaction from "../structures/Interaction";
-import Guild from "../structures/Guild";
+import type Guild from "../structures/Guild";
 import type { ShardEvents } from "../types/events";
-import Role from "../structures/Role";
-import Integration from "../structures/Integration";
-import VoiceState from "../structures/VoiceState";
-import AuditLogEntry from "../structures/AuditLogEntry";
-import type User from "../structures/User";
 import GatewayError, { DependencyError } from "../util/Errors";
 import ClientApplication from "../structures/ClientApplication";
 import WebSocket, { type Data } from "ws";
@@ -105,6 +69,7 @@ export default class Shard extends TypedEmitter<ShardEvents> {
     lastHeartbeatReceived: number;
     lastHeartbeatSent: number;
     latency: number;
+    manager!: ShardManager;
     preReady: boolean;
     presence!: Required<UpdatePresenceOptions>;
     presenceUpdateBucket!: Bucket;
@@ -115,13 +80,19 @@ export default class Shard extends TypedEmitter<ShardEvents> {
     sessionID: string | null;
     status: ShardStatus;
     ws!: WebSocket | null;
-    constructor(id: number, client: Client) {
+    constructor(id: number, manager: ShardManager) {
         super();
         Object.defineProperties(this, {
             client: {
-                value:        client,
+                value:        manager.client,
                 enumerable:   false,
                 writable:     false,
+                configurable: false
+            },
+            manager: {
+                value:        manager,
+                enumerable:   false,
+                writable:     true,
                 configurable: false
             },
             ws: {
@@ -132,7 +103,6 @@ export default class Shard extends TypedEmitter<ShardEvents> {
             }
         });
 
-        this.onDispatch = this.onDispatch.bind(this);
         this.onPacket = this.onPacket.bind(this);
         this.onWSClose = this.onWSClose.bind(this);
         this.onWSError = this.onWSError.bind(this);
@@ -159,6 +129,64 @@ export default class Shard extends TypedEmitter<ShardEvents> {
         this.sessionID = null;
         this.status = "disconnected";
         this.hardReset();
+    }
+
+    private _ready(data: ReadyPacket["d"]): void {
+
+        this.connectAttempts = 0;
+        this.reconnectInterval = 1000;
+        this.connecting = false;
+        if (this._connectTimeout) {
+            clearInterval(this._connectTimeout);
+        }
+        this.status = "ready";
+        this.client.shards["_ready"](this.id);
+        this.client["_application"] = new ClientApplication(data.application, this.client);
+        if (this.client["_user"]) {
+            this.client.users.update(data.user as unknown as RawUser);
+        } else {
+            this.client["_user"] = this.client.users.add(new ExtendedUser(data.user as RawOAuthUser, this.client));
+        }
+
+        let url = data.resume_gateway_url;
+        if (url.includes("?")) {
+            url = url.slice(0, url.indexOf("?"));
+        }
+        if (!url.endsWith("/")) {
+            url += "/";
+        }
+        this.resumeURL = `${url}?v=${GATEWAY_VERSION}&encoding=${Erlpack ? "etf" : "json"}`;
+        if (this.client.shards.options.compress) {
+            this.resumeURL += "&compress=zlib-stream";
+        }
+        this.sessionID = data.session_id;
+
+        for (const guild of data.guilds) {
+            this.client.guilds.delete(guild.id);
+            this.client.unavailableGuilds.update(guild);
+        }
+
+        this.preReady = true;
+        this.emit("preReady");
+
+        if (this.client.unavailableGuilds.size !== 0 && data.guilds.length !== 0) {
+            void this.restartGuildCreateTimeout();
+        } else {
+            void this.checkReady();
+        }
+    }
+
+    private _resume(): void {
+        this.connectAttempts = 0;
+        this.reconnectInterval = 1000;
+        this.connecting = false;
+        if (this._connectTimeout) {
+            clearInterval(this._connectTimeout);
+        }
+        this.status = "ready";
+        this.client.shards["_ready"](this.id);
+        void this.checkReady();
+        this.emit("resume");
     }
 
     private async checkReady(): Promise<void> {
@@ -227,1047 +255,6 @@ export default class Shard extends TypedEmitter<ShardEvents> {
         }, this.client.shards.options.connectionTimeout);
     }
 
-    private async onDispatch(packet: AnyDispatchPacket): Promise<void> {
-        this.client.emit("packet", packet, this.id);
-        switch (packet.t) {
-            case "APPLICATION_COMMAND_PERMISSIONS_UPDATE": {
-                this.client.emit("applicationCommandPermissionsUpdate", this.client.guilds.get(packet.d.guild_id) ?? { id: packet.d.guild_id }, {
-                    application:   packet.d.application_id === this.client.application.id ? this.client.application : undefined,
-                    applicationID: packet.d.application_id,
-                    id:            packet.d.id,
-                    permissions:   packet.d.permissions
-                });
-                break;
-            }
-
-            case "AUTO_MODERATION_ACTION_EXECUTION": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const channel = this.client.getChannel(packet.d.channel_id ?? "");
-                this.client.emit(
-                    "autoModerationActionExecution",
-                    guild ?? { id: packet.d.guild_id },
-                    packet.d.channel_id === undefined ? null : channel ?? { id: packet.d.channel_id },
-                    this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id },
-                    {
-                        action: {
-                            metadata: {
-                                channelID:       packet.d.action.metadata.channel_id,
-                                customMessage:   packet.d.action.metadata.custom_message,
-                                durationSeconds: packet.d.action.metadata.duration_seconds
-                            },
-                            type: packet.d.action.type
-                        },
-                        alertSystemMessageID: packet.d.alert_system_message_id,
-                        content:              packet.d.content,
-                        matchedContent:       packet.d.matched_content,
-                        matchedKeyword:       packet.d.matched_keyword,
-                        messageID:            packet.d.message_id,
-                        rule:                 guild?.autoModerationRules.get(packet.d.rule_id),
-                        ruleID:               packet.d.rule_id,
-                        ruleTriggerType:      packet.d.rule_trigger_type
-                    }
-                );
-                break;
-            }
-
-            case "AUTO_MODERATION_RULE_CREATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const rule = guild?.autoModerationRules.update(packet.d) ?? new AutoModerationRule(packet.d, this.client);
-                this.client.emit("autoModerationRuleCreate", rule);
-                break;
-            }
-
-            case "AUTO_MODERATION_RULE_DELETE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const rule = guild?.autoModerationRules.update(packet.d) ?? new AutoModerationRule(packet.d, this.client);
-                guild?.autoModerationRules.delete(packet.d.id);
-                this.client.emit("autoModerationRuleDelete", rule);
-                break;
-            }
-
-            case "AUTO_MODERATION_RULE_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const oldRule = guild?.autoModerationRules.get(packet.d.id)?.toJSON() ?? null;
-                const rule = guild?.autoModerationRules.update(packet.d) ?? new AutoModerationRule(packet.d, this.client);
-                this.client.emit("autoModerationRuleUpdate", rule, oldRule);
-                break;
-            }
-
-            case "CHANNEL_CREATE": {
-                const channel = packet.d.type === ChannelTypes.GROUP_DM ? this.client.groupChannels.update(packet.d) : this.client.util.updateChannel<AnyGuildChannelWithoutThreads>(packet.d);
-                this.client.emit("channelCreate", channel);
-                break;
-            }
-
-            case "CHANNEL_DELETE": {
-                if (packet.d.type === ChannelTypes.DM) {
-                    const channel = this.client.privateChannels.get(packet.d.id);
-                    this.client.privateChannels.delete(packet.d.id);
-                    this.client.emit("channelDelete", channel ?? {
-                        id:            packet.d.id,
-                        flags:         packet.d.flags,
-                        lastMessageID: packet.d.last_message_id,
-                        type:          packet.d.type
-                    });
-                    break;
-                }
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const channel = this.client.util.updateChannel<AnyGuildChannelWithoutThreads>(packet.d);
-                if (channel instanceof VoiceChannel || channel instanceof StageChannel) {
-                    for (const [,member] of channel.voiceMembers) {
-                        channel.voiceMembers.delete(member.id);
-                        this.client.emit("voiceChannelLeave", member, channel);
-                    }
-                }
-                guild?.channels.delete(packet.d.id);
-                this.client.emit("channelDelete", channel);
-                break;
-            }
-
-            case "CHANNEL_PINS_UPDATE": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                this.client.emit("channelPinsUpdate", channel ?? { id: packet.d.channel_id }, packet.d.last_pin_timestamp === undefined || packet.d.last_pin_timestamp === null ? null : new Date(packet.d.last_pin_timestamp));
-                break;
-            }
-
-            case "CHANNEL_UPDATE": {
-                const oldChannel = this.client.getChannel<AnyGuildChannel>(packet.d.id)?.toJSON() ?? null;
-                let channel: AnyGuildChannel;
-                if (oldChannel && oldChannel.type !== packet.d.type) {
-                    if (this.client.channelGuildMap[packet.d.id]) {
-                        this.client.guilds.get(this.client.channelGuildMap[packet.d.id])!.channels.delete(packet.d.id);
-                    }
-
-                    channel = this.client.util.updateChannel(packet.d);
-                } else {
-                    channel = this.client.util.updateChannel(packet.d);
-                }
-                this.client.emit("channelUpdate", channel, oldChannel);
-                break;
-            }
-
-            case "ENTITLEMENT_CREATE": {
-                const entitlement = this.client.util.updateEntitlement(packet.d);
-                this.client.emit("entitlementCreate", entitlement);
-                break;
-            }
-
-            case "ENTITLEMENT_DELETE": {
-                const entitlement = this.client.util.updateEntitlement(packet.d);
-                this.client["_application"]?.entitlements.delete(packet.d.id);
-                this.client.emit("entitlementDelete", entitlement);
-                break;
-            }
-
-            case "ENTITLEMENT_UPDATE": {
-                const oldEntitlement = this.client["_application"]?.entitlements.get(packet.d.id)?.toJSON() ?? null;
-                const entitlement = this.client.util.updateEntitlement(packet.d);
-                this.client.emit("entitlementUpdate", entitlement, oldEntitlement);
-                break;
-            }
-
-            case "GUILD_AUDIT_LOG_ENTRY_CREATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                this.client.emit("guildAuditLogEntryCreate", guild ?? { id: packet.d.guild_id }, guild?.auditLogEntries.update(packet.d) ?? new AuditLogEntry(packet.d, this.client));
-                break;
-            }
-
-            case "GUILD_BAN_ADD": {
-                this.client.emit("guildBanAdd", this.client.guilds.get(packet.d.guild_id) ?? { id: packet.d.guild_id }, this.client.users.update(packet.d.user));
-                break;
-            }
-
-            case "GUILD_BAN_REMOVE": {
-                this.client.emit("guildBanRemove", this.client.guilds.get(packet.d.guild_id) ?? { id: packet.d.guild_id }, this.client.users.update(packet.d.user));
-                break;
-            }
-
-            case "GUILD_CREATE": {
-                if (packet.d.unavailable) {
-                    this.client.guilds.delete(packet.d.id);
-                    this.client.emit("unavailableGuildCreate", this.client.unavailableGuilds.update(packet.d));
-                } else {
-                    const guild = this.createGuild(packet.d);
-                    if (this.ready) {
-                        if (this.client.unavailableGuilds.delete(guild.id)) {
-                            this.client.emit("guildAvailable", guild);
-                        } else {
-                            this.client.emit("guildCreate", guild);
-                        }
-                    } else {
-                        if (this.client.unavailableGuilds.delete(guild.id)) {
-                            void this.restartGuildCreateTimeout();
-                        } else {
-                            this.client.emit("guildCreate", guild);
-                        }
-                    }
-                }
-                break;
-            }
-
-            case "GUILD_DELETE": {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                this.client.voiceAdapters.get(packet.d.id)?.destroy();
-                delete this.client.guildShardMap[packet.d.id];
-                const guild = this.client.guilds.get(packet.d.id);
-                guild?.channels.clear();
-                guild?.threads.clear();
-                this.client.guilds.delete(packet.d.id);
-                if (packet.d.unavailable) {
-                    this.client.emit("guildUnavailable", this.client.unavailableGuilds.update(packet.d));
-                } else {
-                    this.client.emit("guildDelete", guild ?? { id: packet.d.id });
-                }
-                break;
-            }
-
-            case "GUILD_EMOJIS_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const oldEmojis = guild?.emojis ? guild.emojis.toArray() : null;
-                // eslint-disable-next-line @typescript-eslint/dot-notation
-                guild?.["update"]({ emojis: packet.d.emojis });
-                this.client.emit(
-                    "guildEmojisUpdate",
-                    guild ?? { id: packet.d.guild_id },
-                    guild?.emojis?.toArray() ?? packet.d.emojis.map(emoji => this.client.util.convertEmoji(emoji)),
-                    oldEmojis
-                );
-                break;
-            }
-
-            case "GUILD_INTEGRATIONS_UPDATE": {
-                this.client.emit("guildIntegrationsUpdate", this.client.guilds.get(packet.d.guild_id) ?? { id: packet.d.guild_id });
-                break;
-            }
-
-            case "GUILD_MEMBER_ADD": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                if (guild) {
-                    guild.memberCount++;
-                }
-                const member = this.client.util.updateMember(packet.d.guild_id, packet.d.user!.id, packet.d);
-                this.client.emit("guildMemberAdd", member);
-                break;
-            }
-
-            case "GUILD_MEMBERS_CHUNK": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                // eslint-disable-next-line @typescript-eslint/dot-notation
-                guild?.["updateMemberLimit"](packet.d.members.length);
-                const members = packet.d.members.map(member => this.client.util.updateMember(packet.d.guild_id, member.user!.id, member));
-                if (packet.d.presences) for (const presence of packet.d.presences) {
-                    const member = members.find(m => m.id === presence.user.id)!;
-                    member.presence = {
-                        clientStatus: presence.client_status,
-                        guildID:      presence.guild_id,
-                        status:       presence.status,
-                        activities:   presence.activities?.map(activity => ({
-                            createdAt:     activity.created_at,
-                            name:          activity.name,
-                            type:          activity.type,
-                            applicationID: activity.application_id,
-                            assets:        activity.assets ? {
-                                largeImage: activity.assets.large_image,
-                                largeText:  activity.assets.large_text,
-                                smallImage: activity.assets.small_image,
-                                smallText:  activity.assets.small_text
-                            } : undefined,
-                            buttons:    activity.buttons,
-                            details:    activity.details,
-                            emoji:      activity.emoji,
-                            flags:      activity.flags,
-                            instance:   activity.instance,
-                            party:      activity.party,
-                            secrets:    activity.secrets,
-                            state:      activity.state,
-                            timestamps: activity.timestamps,
-                            url:        activity.url
-                        }))
-                    };
-                }
-                if (!packet.d.nonce) {
-                    this.client.emit("warn", "Received GUILD_MEMBERS_CHUNK without a nonce.");
-                    break;
-                }
-                if (this._requestMembersPromise[packet.d.nonce]) {
-                    this._requestMembersPromise[packet.d.nonce].members.push(...members);
-                }
-
-                if (packet.d.chunk_index >= packet.d.chunk_count - 1) {
-                    if (this._requestMembersPromise[packet.d.nonce]) {
-                        clearTimeout(this._requestMembersPromise[packet.d.nonce].timeout);
-                        this._requestMembersPromise[packet.d.nonce].resolve(this._requestMembersPromise[packet.d.nonce].members);
-                        delete this._requestMembersPromise[packet.d.nonce];
-                    }
-                    if (this._getAllUsersCount[packet.d.guild_id]) {
-                        delete this._getAllUsersCount[packet.d.guild_id];
-                        void this.checkReady();
-                    }
-                }
-
-                this.client.emit("guildMemberChunk", members);
-                this.lastHeartbeatAck = true;
-                break;
-            }
-
-            case "GUILD_MEMBER_REMOVE": {
-                if (packet.d.user.id === this.client.user.id) {
-                    break;
-                }
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                // eslint-disable-next-line @typescript-eslint/dot-notation
-                let user: Member | User | undefined = guild?.members.get(packet.d.user.id);
-                if (user instanceof Member) {
-                    user["update"]({ user: packet.d.user });
-                } else {
-                    user = this.client.users.update(packet.d.user);
-                }
-                if (guild) {
-                    guild.memberCount--;
-                    guild.members.delete(packet.d.user.id);
-                }
-                this.client.emit("guildMemberRemove", user, guild ?? { id: packet.d.guild_id });
-                break;
-            }
-
-            case "GUILD_MEMBER_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const oldMember = guild?.members.get(packet.d.user.id)?.toJSON() ?? null;
-                const member = this.client.util.updateMember(packet.d.guild_id, packet.d.user.id, {  deaf: oldMember?.deaf ?? false, mute: oldMember?.mute ?? false, ...packet.d });
-                this.client.emit("guildMemberUpdate", member, oldMember);
-                break;
-            }
-
-            case "GUILD_ROLE_CREATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const role = guild?.roles.update(packet.d.role, packet.d.guild_id) ?? new Role(packet.d.role, this.client, packet.d.guild_id);
-                this.client.emit("guildRoleCreate", role);
-                break;
-            }
-
-            case "GUILD_ROLE_DELETE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const role = guild?.roles.get(packet.d.role_id);
-                guild?.roles.delete(packet.d.role_id);
-                this.client.emit("guildRoleDelete", role ?? { id: packet.d.role_id }, guild ?? { id: packet.d.guild_id });
-                break;
-            }
-
-            case "GUILD_ROLE_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const oldRole = guild?.roles.get(packet.d.role.id)?.toJSON() ?? null;
-                const role = guild?.roles.update(packet.d.role, packet.d.guild_id) ?? new Role(packet.d.role, this.client, packet.d.guild_id);
-                this.client.emit("guildRoleUpdate", role, oldRole);
-                break;
-            }
-
-            case "GUILD_SCHEDULED_EVENT_CREATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const event = guild?.scheduledEvents.update(packet.d) ?? new GuildScheduledEvent(packet.d, this.client);
-                this.client.emit("guildScheduledEventCreate", event);
-                break;
-            }
-
-            case "GUILD_SCHEDULED_EVENT_DELETE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const event = guild?.scheduledEvents.update(packet.d) ?? new GuildScheduledEvent(packet.d, this.client);
-                guild?.scheduledEvents.delete(packet.d.id);
-                this.client.emit("guildScheduledEventDelete", event);
-                break;
-            }
-
-            case "GUILD_SCHEDULED_EVENT_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id)!;
-                const oldEvent = guild?.scheduledEvents.get(packet.d.id)?.toJSON() ?? null;
-                const event = guild?.scheduledEvents.update(packet.d) ?? new GuildScheduledEvent(packet.d, this.client);
-                this.client.emit("guildScheduledEventUpdate", event, oldEvent);
-                break;
-            }
-
-            case "GUILD_SCHEDULED_EVENT_USER_ADD": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const event = guild?.scheduledEvents.get(packet.d.guild_scheduled_event_id);
-                if (event?.userCount) {
-                    event.userCount++;
-                }
-                const user = this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id };
-                this.client.emit("guildScheduledEventUserAdd", event ?? { id: packet.d.guild_scheduled_event_id }, user ?? { id: packet.d.user_id });
-                break;
-            }
-
-            case "GUILD_SCHEDULED_EVENT_USER_REMOVE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const event = guild?.scheduledEvents.get(packet.d.guild_scheduled_event_id);
-                if (event?.userCount) {
-                    event.userCount--;
-                }
-                const user = this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id };
-                this.client.emit("guildScheduledEventUserRemove", event ?? { id: packet.d.guild_scheduled_event_id }, user ?? { id: packet.d.user_id });
-                break;
-            }
-
-            case "GUILD_STICKERS_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const oldStickers = guild?.stickers ? guild.stickers.toArray() : null;
-                // eslint-disable-next-line @typescript-eslint/dot-notation
-                guild?.["update"]({ stickers: packet.d.stickers });
-                this.client.emit("guildStickersUpdate", guild ?? { id: packet.d.guild_id }, guild?.stickers?.toArray() ?? packet.d.stickers.map(sticker => this.client.util.convertSticker(sticker)), oldStickers);
-                break;
-            }
-
-            case "GUILD_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.id);
-                const oldGuild = guild?.toJSON() ?? null;
-                this.client.emit("guildUpdate", this.client.guilds.update(packet.d), oldGuild);
-                break;
-            }
-
-            case "INTEGRATION_CREATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const integration = guild?.integrations.update(packet.d, packet.d.guild_id) ?? new Integration(packet.d, this.client, packet.d.guild_id);
-                this.client.emit("integrationCreate", guild ?? { id: packet.d.guild_id }, integration);
-                break;
-            }
-
-            case "INTEGRATION_DELETE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const integration = guild?.integrations.get(packet.d.id);
-                guild?.integrations.delete(packet.d.id);
-                this.client.emit("integrationDelete", guild ?? { id: packet.d.guild_id }, integration ?? { applicationID: packet.d.application_id, id: packet.d.id });
-                break;
-            }
-
-            case "INTEGRATION_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const oldIntegration = guild?.integrations.get(packet.d.id)?.toJSON() ?? null;
-                const integration = guild?.integrations.update(packet.d, packet.d.guild_id) ?? new Integration(packet.d, this.client, packet.d.guild_id);
-                this.client.emit("integrationUpdate", guild ?? { id: packet.d.guild_id }, integration, oldIntegration);
-                break;
-            }
-
-            case "INTERACTION_CREATE": {
-                this.client.emit("interactionCreate", Interaction.from(packet.d, this.client));
-                break;
-            }
-
-            case "INVITE_CREATE": {
-                let invite: Invite | undefined;
-                if (packet.d.guild_id) {
-                    const guild = this.client.guilds.get(packet.d.guild_id);
-                    invite = guild?.invites.update(packet.d);
-                }
-                this.client.emit("inviteCreate", invite ?? new Invite(packet.d, this.client));
-                break;
-            }
-
-            case "INVITE_DELETE": {
-                const channel = this.client.getChannel<AnyInviteChannel>(packet.d.channel_id) ?? { id: packet.d.channel_id };
-                const guild = packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) ?? { id: packet.d.guild_id } : undefined;
-                let invite: PossiblyUncachedInvite = {
-                    code: packet.d.code,
-                    channel,
-                    guild
-                };
-                if (guild instanceof Guild && guild.invites.has(packet.d.code)) {
-                    invite = guild.invites.get(packet.d.code)!;
-                    guild.invites.delete(packet.d.code);
-                }
-                this.client.emit("inviteDelete", invite);
-                break;
-            }
-
-            case "MESSAGE_CREATE": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const message = channel?.messages?.update(packet.d) ?? new Message(packet.d, this.client);
-                if (channel) {
-                    channel.lastMessage = message as never;
-                    channel.lastMessageID = message.id;
-                }
-                this.client.emit("messageCreate", message);
-                break;
-            }
-
-            case "MESSAGE_DELETE": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const message = channel?.messages?.get(packet.d.id);
-                if (channel) {
-                    channel.messages?.delete(packet.d.id);
-                    if (channel.lastMessageID === packet.d.id) {
-                        channel.lastMessageID = null;
-                        channel.lastMessage = null;
-                    }
-                }
-                this.client.emit("messageDelete", message ?? {
-                    channel:   channel ?? { id: packet.d.channel_id },
-                    channelID: packet.d.channel_id,
-                    guild:     packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined,
-                    guildID:   packet.d.guild_id, id:        packet.d.id
-                });
-                break;
-            }
-
-            case "MESSAGE_DELETE_BULK": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const guild = packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined;
-                this.client.emit("messageDeleteBulk", packet.d.ids.map(id => {
-                    const message = channel?.messages?.get(id);
-                    channel?.messages?.delete(id);
-                    return message ?? {
-                        channel:   channel ?? { id: packet.d.channel_id },
-                        channelID: packet.d.channel_id,
-                        guild,
-                        guildID:   packet.d.guild_id,
-                        id
-                    };
-                }));
-                break;
-            }
-
-            case "MESSAGE_POLL_VOTE_ADD": {
-                const user = this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id };
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id) ?? { id: packet.d.channel_id };
-                const guild = packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined;
-                const message = (channel instanceof Channel ? channel.messages.get(packet.d.message_id) : undefined) ?? { channel, channelID: channel.id, guild, guildID: guild?.id, id: packet.d.message_id };
-                let answer: PollAnswer | { answerID: number; } = { answerID: packet.d.answer_id };
-                if (message instanceof Message && message.poll !== undefined) {
-                    const pollAnswer = message.poll.answers.find(a => a.answerID === packet.d.answer_id);
-                    if (pollAnswer) {
-                        answer = pollAnswer;
-                    }
-
-                    this.client.util.updatePollAnswer(message.poll, packet.d.answer_id, 1, packet.d.user_id);
-                }
-                this.client.emit("messagePollVoteAdd", message, user, answer);
-                break;
-            }
-
-            case "MESSAGE_POLL_VOTE_REMOVE": {
-                const user = this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id };
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id) ?? { id: packet.d.channel_id };
-                const guild = packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined;
-                const message = (channel instanceof Channel ? channel.messages.get(packet.d.message_id) : undefined) ?? { channel, channelID: channel.id, guild, guildID: guild?.id, id: packet.d.message_id };
-                let answer: PollAnswer | { answerID: number; } = { answerID: packet.d.answer_id };
-                if (message instanceof Message && message.poll !== undefined) {
-                    const pollAnswer = message.poll.answers.find(a => a.answerID === packet.d.answer_id);
-                    if (pollAnswer) {
-                        answer = pollAnswer;
-                    }
-
-                    this.client.util.updatePollAnswer(message.poll, packet.d.answer_id, -1, packet.d.user_id);
-                }
-                this.client.emit("messagePollVoteRemove", message, user, answer);
-                break;
-            }
-
-            case "MESSAGE_REACTION_ADD": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const guild = packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined;
-                const message = channel?.messages?.get(packet.d.message_id);
-                const reactor = packet.d.member
-                    ? (packet.d.guild_id ? this.client.util.updateMember(packet.d.guild_id, packet.d.user_id, packet.d.member) : this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id })
-                    : this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id };
-
-                if (message) {
-                    const index = message.reactions.findIndex(r => r.emoji.id === packet.d.emoji.id && r.emoji.name === packet.d.emoji.name);
-                    if (index === -1) {
-                        message.reactions.push({
-                            burstColors:  packet.d.burst_colors,
-                            count:        1,
-                            countDetails: {
-                                burst:  packet.d.burst ? 1 : 0,
-                                normal: packet.d.burst ? 0 : 1
-                            },
-                            emoji:   packet.d.emoji,
-                            me:      packet.d.user_id === this.client.user.id,
-                            meBurst: packet.d.user_id === this.client.user.id && packet.d.burst
-                        });
-                    } else {
-                        if (packet.d.burst) {
-                            message.reactions[index].countDetails.burst++;
-                        } else {
-                            message.reactions[index].countDetails.normal++;
-                        }
-                        message.reactions[index].count++;
-                        if (packet.d.user_id === this.client.user.id) {
-                            message.reactions[index].me = true;
-                        }
-                    }
-
-                }
-
-                this.client.emit("messageReactionAdd", message ?? {
-                    channel:   channel ?? { id: packet.d.channel_id },
-                    channelID: packet.d.channel_id,
-                    guild,
-                    guildID:   packet.d.guild_id,
-                    id:        packet.d.message_id ,
-                    author:    packet.d.message_author_id === undefined ? undefined : this.client.users.get(packet.d.message_author_id) ?? { id: packet.d.message_author_id },
-                    member:    packet.d.message_author_id === undefined ? undefined : guild?.members.get(packet.d.message_author_id) ?? { id: packet.d.message_author_id }
-                }, reactor, {
-                    burst:       packet.d.burst,
-                    burstColors: packet.d.burst_colors,
-                    emoji:       packet.d.emoji,
-                    type:        packet.d.type
-                });
-                break;
-            }
-
-            case "MESSAGE_REACTION_REMOVE": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const message = channel?.messages?.get(packet.d.message_id);
-                const reactor = this.client.users.get(packet.d.user_id) ?? { id: packet.d.user_id };
-
-                if (message) {
-                    const index = message.reactions.findIndex(r => r.emoji.id === packet.d.emoji.id && r.emoji.name === packet.d.emoji.name);
-                    if (index !== -1) {
-                        if (packet.d.burst) {
-                            message.reactions[index].countDetails.burst--;
-                        } else {
-                            message.reactions[index].countDetails.normal--;
-                        }
-                        message.reactions[index].count--;
-                        if (packet.d.user_id === this.client.user.id) {
-                            if (packet.d.burst) {
-                                message.reactions[index].meBurst = false;
-                            } else {
-                                message.reactions[index].me = false;
-                            }
-                        }
-                        if (message.reactions[index].count === 0) {
-                            message.reactions.splice(index, 1);
-                        }
-                    }
-                }
-
-                this.client.emit("messageReactionRemove", message ?? {
-                    channel:   channel ?? { id: packet.d.channel_id },
-                    channelID: packet.d.channel_id,
-                    guild:     packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined,
-                    guildID:   packet.d.guild_id,
-                    id:        packet.d.message_id
-                }, reactor, {
-                    burst:       packet.d.burst,
-                    burstColors: packet.d.burst_colors,
-                    emoji:       packet.d.emoji,
-                    type:        packet.d.type
-                });
-                break;
-            }
-
-            case "MESSAGE_REACTION_REMOVE_ALL": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const message = channel?.messages?.get(packet.d.message_id);
-
-                if (message) {
-                    message.reactions = [];
-                }
-
-                this.client.emit("messageReactionRemoveAll", message ?? {
-                    channel:   channel ?? { id: packet.d.channel_id },
-                    channelID: packet.d.channel_id,
-                    guild:     packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined,
-                    guildID:   packet.d.guild_id,
-                    id:        packet.d.message_id
-                });
-                break;
-            }
-
-            case "MESSAGE_REACTION_REMOVE_EMOJI": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const message = channel?.messages?.get(packet.d.message_id);
-
-                if (message) {
-                    const index = message.reactions.findIndex(r => r.emoji.id === packet.d.emoji.id && r.emoji.name === packet.d.emoji.name);
-                    if (index !== -1) {
-                        message.reactions.splice(index, 1);
-                    }
-                }
-
-                this.client.emit("messageReactionRemoveEmoji", message ?? {
-                    channel:   channel ?? { id: packet.d.channel_id },
-                    channelID: packet.d.channel_id,
-                    guild:     packet.d.guild_id ? this.client.guilds.get(packet.d.guild_id) : undefined,
-                    guildID:   packet.d.guild_id,
-                    id:        packet.d.message_id
-                }, packet.d.emoji);
-                break;
-            }
-
-            case "MESSAGE_UPDATE": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id);
-                const oldMessage = channel?.messages?.get(packet.d.id)?.toJSON() ?? null;
-                if (!oldMessage && !packet.d.author) {
-                    this.client.emit("debug", `Got partial MESSAGE_UPDATE for uncached message ${packet.d.id} for channel ${packet.d.channel_id}, discarding..`);
-                    break;
-                }
-                const message = channel?.messages?.update(packet.d) ?? new Message(packet.d as RawMessage, this.client);
-                this.client.emit("messageUpdate", message, oldMessage);
-                break;
-            }
-
-            case "PRESENCE_UPDATE": {
-                const user = this.client.users.get(packet.d.user.id);
-                if (user) {
-                    const oldUser = user.toJSON();
-                    user["update"](packet.d.user);
-                    if (JSON.stringify(oldUser) !== JSON.stringify(user.toJSON())) {
-                        this.client.emit("userUpdate", user, oldUser);
-                    }
-                }
-
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const member = guild?.members.get(packet.d.user.id);
-                const oldPresence = member?.presence ?? null;
-
-                const presence = {
-                    clientStatus: packet.d.client_status,
-                    guildID:      packet.d.guild_id,
-                    status:       packet.d.status,
-                    activities:   packet.d.activities?.map(activity => ({
-                        createdAt:     activity.created_at,
-                        name:          activity.name,
-                        type:          activity.type,
-                        applicationID: activity.application_id,
-                        assets:        activity.assets ? {
-                            largeImage: activity.assets.large_image,
-                            largeText:  activity.assets.large_text,
-                            smallImage: activity.assets.small_image,
-                            smallText:  activity.assets.small_text
-                        } : undefined,
-                        buttons:    activity.buttons,
-                        details:    activity.details,
-                        emoji:      activity.emoji,
-                        flags:      activity.flags,
-                        instance:   activity.instance,
-                        party:      activity.party,
-                        secrets:    activity.secrets,
-                        state:      activity.state,
-                        timestamps: activity.timestamps,
-                        url:        activity.url
-                    }))
-                };
-                const userID = packet.d.user.id;
-
-                delete (packet.d as { user?: PresenceUpdate["user"]; }).user;
-                if (member) {
-                    member.presence = presence;
-                }
-
-                this.client.emit("presenceUpdate", guild ?? { id: packet.d.guild_id }, member ?? { id: userID }, presence, oldPresence);
-                break;
-            }
-
-            case "READY": {
-                this.connectAttempts = 0;
-                this.reconnectInterval = 1000;
-                this.connecting = false;
-                if (this._connectTimeout) {
-                    clearInterval(this._connectTimeout);
-                }
-                this.status = "ready";
-                this.client.shards["_ready"](this.id);
-                this.client["_application"] = new ClientApplication(packet.d.application, this.client);
-                if (this.client["_user"]) {
-                    this.client.users.update(packet.d.user as unknown as RawUser);
-                } else {
-                    this.client["_user"] = this.client.users.add(new ExtendedUser(packet.d.user as RawOAuthUser, this.client));
-                }
-
-                let url = packet.d.resume_gateway_url;
-                if (url.includes("?")) {
-                    url = url.slice(0, url.indexOf("?"));
-                }
-                if (!url.endsWith("/")) {
-                    url += "/";
-                }
-                this.resumeURL = `${url}?v=${GATEWAY_VERSION}&encoding=${Erlpack ? "etf" : "json"}`;
-                if (this.client.shards.options.compress) {
-                    this.resumeURL += "&compress=zlib-stream";
-                }
-                this.sessionID = packet.d.session_id;
-
-                for (const guild of packet.d.guilds) {
-                    this.client.guilds.delete(guild.id);
-                    this.client.unavailableGuilds.update(guild);
-                }
-
-                this.preReady = true;
-                this.emit("preReady");
-
-                if (this.client.unavailableGuilds.size !== 0 && packet.d.guilds.length !== 0) {
-                    void this.restartGuildCreateTimeout();
-                } else {
-                    void this.checkReady();
-                }
-                break;
-            }
-
-            case "RESUMED": {
-                this.connectAttempts = 0;
-                this.reconnectInterval = 1000;
-                this.connecting = false;
-                if (this._connectTimeout) {
-                    clearInterval(this._connectTimeout);
-                }
-                this.status = "ready";
-                this.client.shards["_ready"](this.id);
-                void this.checkReady();
-                this.emit("resume");
-                break;
-            }
-
-            case "STAGE_INSTANCE_CREATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const stateInstance = guild?.stageInstances.update(packet.d) ?? new StageInstance(packet.d, this.client);
-                this.client.emit("stageInstanceCreate", stateInstance);
-                break;
-            }
-
-            case "STAGE_INSTANCE_DELETE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const stateInstance = guild?.stageInstances.update(packet.d) ?? new StageInstance(packet.d, this.client);
-                guild?.stageInstances.delete(packet.d.id);
-                this.client.emit("stageInstanceDelete", stateInstance);
-                break;
-            }
-
-            case "STAGE_INSTANCE_UPDATE": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const oldStageInstance = guild?.stageInstances.get(packet.d.id)?.toJSON() ?? null;
-                const stateInstance = guild?.stageInstances.update(packet.d) ?? new StageInstance(packet.d, this.client);
-                this.client.emit("stageInstanceUpdate", stateInstance, oldStageInstance);
-                break;
-            }
-
-            case "THREAD_CREATE": {
-                const thread = this.client.util.updateThread(packet.d);
-                const channel = this.client.getChannel<ThreadParentChannel>(packet.d.parent_id!);
-                if (channel && channel.type === ChannelTypes.GUILD_FORUM) {
-                    channel.lastThreadID = thread.id;
-                }
-                this.client.emit("threadCreate", thread);
-                break;
-            }
-
-            case "THREAD_DELETE": {
-                const channel = this.client.getChannel<ThreadParentChannel>(packet.d.parent_id!);
-                const thread = this.client.getChannel<AnyThreadChannel>(packet.d.id) ?? {
-                    id:       packet.d.id,
-                    guild:    this.client.guilds.get(packet.d.guild_id),
-                    guildID:  packet.d.guild_id,
-                    parent:   channel || { id: packet.d.parent_id! },
-                    parentID: packet.d.parent_id!,
-                    type:     packet.d.type
-                };
-                if (channel && channel.type === ChannelTypes.GUILD_FORUM && channel.lastThreadID === packet.d.id) {
-                    channel.lastThreadID = null;
-                }
-                this.client.guilds.get(packet.d.guild_id)?.threads.delete(packet.d.id);
-                this.client.emit("threadDelete", thread);
-                break;
-            }
-
-            case "THREAD_LIST_SYNC": {
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                if (!guild) {
-                    this.client.emit("debug", `Missing guild in THREAD_LIST_SYNC: ${packet.d.guild_id}`);
-                    break;
-                }
-                for (const threadData of packet.d.threads) {
-                    this.client.util.updateThread(threadData);
-                }
-                for (const member of packet.d.members) {
-                    const thread = this.client.getChannel<AnyThreadChannel>(member.id);
-                    if (thread) {
-                        const threadMember: ThreadMember = {
-                            id:            member.id,
-                            flags:         member.flags,
-                            joinTimestamp: new Date(member.join_timestamp),
-                            userID:        member.user_id
-                        };
-                        const index = thread.members.findIndex(m => m.userID === member.user_id);
-                        if (index === -1) {
-                            thread.members.push(threadMember);
-                        } else {
-                            thread.members[index] = threadMember;
-                        }
-                    }
-                }
-                break;
-            }
-
-            case "THREAD_MEMBER_UPDATE": {
-                const thread = this.client.getChannel<AnyThreadChannel>(packet.d.id);
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const threadMember: ThreadMember = {
-                    id:            packet.d.id,
-                    flags:         packet.d.flags,
-                    joinTimestamp: new Date(packet.d.join_timestamp),
-                    userID:        packet.d.user_id
-                };
-                let oldThreadMember: ThreadMember | null = null;
-                if (thread) {
-                    const index = thread.members.findIndex(m => m.userID === packet.d.user_id);
-                    if (index === -1) {
-                        thread.members.push(threadMember);
-                    } else {
-                        oldThreadMember = { ...thread.members[index] };
-                        thread.members[index] = threadMember;
-                    }
-                }
-
-                this.client.emit(
-                    "threadMemberUpdate",
-                    thread ?? {
-                        id:      packet.d.id,
-                        guild,
-                        guildID: packet.d.guild_id
-                    },
-                    threadMember,
-                    oldThreadMember
-                );
-                break;
-            }
-
-            case "THREAD_MEMBERS_UPDATE": {
-                const thread = this.client.getChannel<AnyThreadChannel>(packet.d.id);
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const addedMembers: Array<ThreadMember> = (packet.d.added_members ?? []).map(rawMember => ({
-                    flags:         rawMember.flags,
-                    id:            rawMember.id,
-                    joinTimestamp: new Date(rawMember.join_timestamp),
-                    userID:        rawMember.user_id
-                }));
-                const removedMembers: Array<ThreadMember | UncachedThreadMember> = (packet.d.removed_member_ids ?? []).map(id => ({ userID: id, id: packet.d.id }));
-                if (thread) {
-                    thread.memberCount = packet.d.member_count;
-                    for (const rawMember of addedMembers) {
-                        const index = thread.members.findIndex(m => m.userID === rawMember.id);
-                        if (index === -1) {
-                            thread.members.push(rawMember);
-                        } else {
-                            thread.members[index] = rawMember;
-                        }
-                    }
-                    for (const [index, { userID }] of removedMembers.entries()) {
-                        const memberIndex = thread.members.findIndex(m => m.userID === userID);
-                        if (memberIndex >= 0) {
-                            removedMembers[index] = thread.members[memberIndex];
-                            thread.members.splice(memberIndex, 1);
-                        }
-                    }
-                }
-                this.client.emit(
-                    "threadMembersUpdate",
-                    thread ?? {
-                        id:      packet.d.id,
-                        guild,
-                        guildID: packet.d.guild_id
-                    },
-                    addedMembers,
-                    removedMembers
-                );
-                break;
-            }
-
-            case "THREAD_UPDATE": {
-                const oldThread = this.client.getChannel<AnyThreadChannel>(packet.d.id)?.toJSON() ?? null;
-                const thread = this.client.util.updateThread(packet.d);
-                this.client.emit("threadUpdate", thread as AnnouncementThreadChannel, oldThread as JSONAnnouncementThreadChannel);
-                break;
-            }
-
-            case "TYPING_START": {
-                const channel = this.client.getChannel<AnyTextableChannel>(packet.d.channel_id) ?? { id: packet.d.channel_id };
-                const startTimestamp = new Date(packet.d.timestamp);
-                if (packet.d.member) {
-                    const member = this.client.util.updateMember(packet.d.guild_id!, packet.d.user_id, packet.d.member);
-                    this.client.emit("typingStart", channel, member, startTimestamp);
-                    break;
-                }
-                const user = this.client.users.get(packet.d.user_id);
-                this.client.emit("typingStart", channel, user ?? { id: packet.d.user_id }, startTimestamp);
-                break;
-            }
-
-            case "USER_UPDATE": {
-                const oldUser = this.client.users.get(packet.d.id)?.toJSON() ?? null;
-                this.client.emit("userUpdate", this.client.users.update(packet.d), oldUser);
-                break;
-            }
-
-            case "VOICE_CHANNEL_EFFECT_SEND": {
-                const channel = this.client.getChannel<AnyVoiceChannel>(packet.d.channel_id);
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const user = guild?.members.get(packet.d.user_id) ?? this.client.users.get(packet.d.user_id);
-                this.client.emit("voiceChannelEffectSend", channel ?? { id: packet.d.channel_id, guild: guild ?? { id: packet.d.guild_id } }, user ?? { id: packet.d.user_id }, {
-                    animationID:   packet.d.animation_id,
-                    animationType: packet.d.animation_type
-                });
-                break;
-            }
-
-            case "VOICE_STATE_UPDATE": {
-                if (packet.d.guild_id && packet.d.session_id && packet.d.user_id === this.client.user.id) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                    this.client.voiceAdapters.get(packet.d.guild_id)?.onVoiceStateUpdate(packet.d as never);
-                }
-                // @TODO voice states without guilds?
-                if (!packet.d.guild_id || !packet.d.member) {
-                    break;
-                }
-                packet.d.self_stream = !!packet.d.self_stream;
-                const guild = this.client.guilds.get(packet.d.guild_id);
-                const member = this.client.util.updateMember(packet.d.guild_id, packet.d.user_id, packet.d.member);
-
-                const oldState = guild?.voiceStates.get(member.id)?.toJSON() ?? null;
-                const state = guild?.voiceStates.update({ ...packet.d, id: member.id }) ?? new VoiceState(packet.d, this.client);
-                member["update"]({ deaf: state.deaf, mute: state.mute });
-
-                if (oldState?.channelID !== state.channelID) {
-                    const oldChannel = oldState?.channelID ? this.client.getChannel<VoiceChannel | StageChannel>(oldState.channelID) ?? { id: oldState.channelID } : null;
-                    const newChannel = state.channel === null ? null : state.channel ?? { id: state.channelID! };
-
-                    if (newChannel instanceof Channel) {
-                        newChannel.voiceMembers.add(member);
-                    }
-                    if (oldChannel instanceof Channel) {
-                        oldChannel.voiceMembers.delete(member.id);
-                    }
-                    if (oldChannel && newChannel) {
-                        this.client.emit("voiceChannelSwitch", member, newChannel, oldChannel);
-                    } else if (newChannel) {
-                        this.client.emit("voiceChannelJoin", member, newChannel);
-                    } else if (state.channelID === null) {
-                        this.client.emit("voiceChannelLeave", member, oldChannel);
-                    }
-                }
-
-                if (JSON.stringify(oldState) !== JSON.stringify(state.toJSON())) {
-                    this.client.emit("voiceStateUpdate", member, oldState);
-                }
-
-                break;
-            }
-
-            case "VOICE_CHANNEL_STATUS_UPDATE": {
-                this.client.emit("voiceChannelStatusUpdate", this.client.getChannel<VoiceChannel>(packet.d.id) ?? { id: packet.d.id }, packet.d.status);
-                break;
-            }
-
-            case "VOICE_SERVER_UPDATE": {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                this.client.voiceAdapters.get(packet.d.guild_id)?.onVoiceServerUpdate(packet.d);
-                break;
-            }
-
-            case "WEBHOOKS_UPDATE": {
-                this.client.emit("webhooksUpdate", this.client.guilds.get(packet.d.guild_id) ?? { id: packet.d.guild_id }, this.client.getChannel<AnyGuildChannelWithoutThreads>(packet.d.channel_id) ?? { id: packet.d.channel_id });
-                break;
-            }
-        }
-    }
-
     private onPacket(packet: AnyReceivePacket): void {
         if ("s" in packet && packet.s) {
             if (packet.s > this.sequence + 1 && this.ws && this.status !== "resuming") {
@@ -1279,7 +266,8 @@ export default class Shard extends TypedEmitter<ShardEvents> {
 
         switch (packet.op) {
             case GatewayOPCodes.DISPATCH: {
-                void this.onDispatch(packet);
+                this.client.emit("packet", packet, this.id);
+                this.manager.dispatcher["handle"](packet, this);
                 break;
             }
 
