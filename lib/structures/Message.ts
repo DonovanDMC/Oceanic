@@ -37,7 +37,9 @@ import type {
     RoleSubscriptionData,
     MessageInteractionMetadata,
     GetPollAnswerUsersOptions,
-    Call
+    Call,
+    MessageSnapshot,
+    MessageMentions
 } from "../types/channels";
 import type { RawMember } from "../types/guilds";
 import type { DeleteWebhookMessageOptions, EditWebhookMessageOptions } from "../types/webhooks";
@@ -95,20 +97,11 @@ export default class Message<T extends AnyTextableChannel | Uncached = AnyTextab
     /** Channels mentioned in a `CROSSPOSTED` channel follower message. See [Discord's docs](https://discord.com/developers/docs/resources/channel#channel-mention-object) for more information. */
     mentionChannels?: Array<ChannelMention>;
     /** The mentions in this message. */
-    mentions: {
-        /** The ids of the channels mentioned in this message. */
-        channels: Array<string>;
-        /** If @everyone/@here is mentioned in this message. */
-        everyone: boolean;
-        /** The members mentioned in this message. */
-        members: Array<Member>;
-        /** The ids of the roles mentioned in this message. */
-        roles: Array<string>;
-        /** The users mentioned in this message. */
-        users: Array<User>;
-    };
+    mentions: MessageMentions;
     /** If this message is a `REPLY` or `THREAD_STARTER_MESSAGE`, some info about the referenced message. */
     messageReference?: MessageReference;
+    /** If this message is a forwarded message, the partial contents of that message. */
+    messageSnapshots?: Array<MessageSnapshot>;
     /** A nonce for ensuring a message was sent. */
     nonce?: number | string;
     /** If this message is pinned. */
@@ -277,6 +270,25 @@ export default class Message<T extends AnyTextableChannel | Uncached = AnyTextab
                 guildID:         data.message_reference.guild_id,
                 messageID:       data.message_reference.message_id
             };
+        }
+
+        if (data.message_snapshots) {
+            this.messageSnapshots = data.message_snapshots.map(s => ({
+                message: {
+                    attachments:     s.message.attachments.map(a => new Attachment(a, this.client)),
+                    content:         s.message.content,
+                    editedTimestamp: s.message.edited_timestamp ? new Date(s.message.edited_timestamp) : null,
+                    embeds:          this.client.util.embedsToParsed(s.message.embeds),
+                    flags:           s.message.flags ?? 0,
+                    mentions:        {
+                        channels: (s.message.content.match(/<#\d{17,21}>/g) ?? []).map(mention => mention.slice(2, -1)),
+                        roles:    s.message.mention_roles,
+                        users:    s.message.mentions.map(u => this.client.users.update(u))
+                    },
+                    timestamp: new Date(s.message.timestamp),
+                    type:      s.message.type
+                }
+            }));
         }
 
         if (data.nonce !== undefined) {
@@ -533,7 +545,23 @@ export default class Message<T extends AnyTextableChannel | Uncached = AnyTextab
                 roles:    this.mentions.roles,
                 users:    this.mentions.users.map(user => user.toJSON())
             },
-            messageReference:  this.messageReference,
+            messageReference: this.messageReference,
+            messageSnapshots: this.messageSnapshots?.map(s => ({
+                message: {
+                    attachments:     s.message.attachments.map(a => a.toJSON()),
+                    content:         s.message.content,
+                    editedTimestamp: s.message.editedTimestamp?.getTime() ?? null,
+                    embeds:          s.message.embeds,
+                    flags:           s.message.flags,
+                    mentions:        {
+                        channels: s.message.mentions.channels,
+                        roles:    s.message.mentions.roles,
+                        users:    s.message.mentions.users.map(u => u.toJSON())
+                    },
+                    timestamp: s.message.timestamp.getTime(),
+                    type:      s.message.type
+                }
+            })),
             nonce:             this.nonce,
             pinned:            this.pinned,
             position:          this.position,

@@ -53,6 +53,7 @@ import type ForumChannel from "../structures/ForumChannel";
 import type Message from "../structures/Message";
 import type Guild from "../structures/Guild";
 import type Invite from "../structures/Invite";
+import type Attachment from "../structures/Attachment";
 
 export interface RawChannel {
     application_id?: string;
@@ -704,6 +705,7 @@ export interface RawMessage {
     mention_roles: Array<string>;
     mentions: Array<RawUserWithMember>;
     message_reference?: RawMessageReference;
+    message_snapshots?: Array<RawMessageSnapshot>;
     nonce?: number | string;
     pinned: boolean;
     poll?: RawPoll;
@@ -1270,4 +1272,37 @@ export interface EventReaction {
     burstColors?: Array<string>;
     emoji: PartialEmoji;
     type: ReactionType;
+}
+
+export interface RawMessageSnapshotMessage extends Pick<RawMessage, "type" | "content" | "embeds" | "attachments" | "timestamp" | "edited_timestamp" | "flags" | "mentions" | "mention_roles"> {}
+
+export interface RawMessageSnapshot {
+    message: RawMessageSnapshotMessage;
+}
+export interface MessageSnapshotMessage {
+    attachments: Array<Attachment>;
+    content: string;
+    editedTimestamp: Date | null;
+    embeds: Array<Embed>;
+    flags: number;
+    mentions: Omit<MessageMentions, "everyone" | "members">;
+    timestamp: Date;
+    type: MessageTypes;
+}
+
+export interface MessageSnapshot {
+    message: MessageSnapshotMessage;
+}
+
+export interface MessageMentions {
+    /** The ids of the channels mentioned in this message. */
+    channels: Array<string>;
+    /** If @everyone/@here is mentioned in this message. */
+    everyone: boolean;
+    /** The members mentioned in this message. */
+    members: Array<Member>;
+    /** The ids of the roles mentioned in this message. */
+    roles: Array<string>;
+    /** The users mentioned in this message. */
+    users: Array<User>;
 }

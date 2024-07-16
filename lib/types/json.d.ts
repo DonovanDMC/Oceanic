@@ -440,6 +440,7 @@ export interface JSONMediaChannel extends JSONThreadOnlyChannel {
 export interface JSONMember extends JSONBase {
     avatar: string | null;
     avatarDecorationData: AvatarDecorationData | null;
+    banner: string | null;
     communicationDisabledUntil: number | null;
     deaf: boolean;
     flags?: number;
@@ -499,6 +500,22 @@ export interface JSONMessage extends JSONBase {
         users: Array<JSONUser>;
     };
     messageReference?: MessageReference;
+    messageSnapshots?: Array<{
+        message: {
+            attachments: Array<JSONAttachment>;
+            content: string;
+            editedTimestamp: number | null;
+            embeds: Array<Embed>;
+            flags: number;
+            mentions: {
+                channels: Array<string>;
+                roles: Array<string>;
+                users: Array<JSONUser>;
+            };
+            timestamp: number;
+            type: MessageTypes;
+        };
+    }>;
     nonce?: number | string;
     pinned: boolean;
     position?: number;
@@ -553,6 +570,7 @@ export interface JSONOAuthApplication extends JSONBase {
 export interface JSONOAuthGuild extends JSONBase {
     approximateMemberCount?: number;
     approximatePresenceCount?: number;
+    banner: string | null;
     features: Array<GuildFeature>;
     icon: string | null;
     name: string;

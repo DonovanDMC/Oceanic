@@ -204,6 +204,7 @@ export interface Sticker {
 export interface RawMember {
     avatar?: string | null;
     avatar_decoration_data?: RawAvatarDecorationData | null;
+    banner?: string | null;
     communication_disabled_until?: string | null;
     deaf: boolean;
     /** undocumented */
@@ -734,6 +735,7 @@ export interface StickerPack {
 export interface RawOAuthGuild {
     approximate_member_count?: number;
     approximate_presence_count?: number;
+    banner: string | null;
     features: Array<GuildFeature>;
     icon: string | null;
     id: string;

@@ -14,6 +14,8 @@ export default class OAuthGuild extends Base {
     approximateMemberCount?: number;
     /** The approximate number of non-offline members in this guild (if retrieved with counts). */
     approximatePresenceCount?: number;
+    /** The hash of this guild's banner. */
+    banner: string | null;
     /** The [features](https://discord.com/developers/docs/resources/guild#guild-object-guild-features) this guild has. */
     features: Array<GuildFeature>;
     /** The icon hash of this guild. */
@@ -28,6 +30,7 @@ export default class OAuthGuild extends Base {
         super(data.id, client);
         this.approximateMemberCount = data.approximate_member_count;
         this.approximatePresenceCount = data.approximate_presence_count;
+        this.banner = data.banner;
         this.features = data.features;
         this.name = data.name;
         this.icon = data.icon;
@@ -38,6 +41,15 @@ export default class OAuthGuild extends Base {
     /** The complete guild this OAuthGuild represents, if cached. */
     get completeGuild(): Guild | undefined {
         return this._cachedCompleteGuild ??= this.client.guilds.get(this.id);
+    }
+
+    /**
+     * The url of this guild's banner.
+     * @param format The format the url should be.
+     * @param size The dimensions of the image.
+     */
+    bannerURL(format?: ImageFormat, size?: number): string | null {
+        return this.banner === null ? null : this.client.util.formatImage(Routes.BANNER(this.id, this.banner), format, size);
     }
 
     /**
@@ -54,6 +66,7 @@ export default class OAuthGuild extends Base {
             ...super.toJSON(),
             approximateMemberCount:   this.approximateMemberCount,
             approximatePresenceCount: this.approximatePresenceCount,
+            banner:                   this.banner,
             features:                 this.features,
             icon:                     this.icon,
             name:                     this.name,

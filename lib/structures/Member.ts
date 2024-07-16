@@ -26,6 +26,8 @@ export default class Member extends Base {
     avatar: string | null;
     /** The data for this user's avatar decoration. */
     avatarDecorationData: AvatarDecorationData | null;
+    /** The member's banner hash, if they have set a guild banner. */
+    banner: string | null;
     /** When the member's [timeout](https://support.discord.com/hc/en-us/articles/4413305239191-Time-Out-FAQ) will expire, if active. */
     communicationDisabledUntil: Date | null;
     /** If this member is server deafened. */
@@ -66,6 +68,7 @@ export default class Member extends Base {
         super(user.id, client);
         this.avatar = null;
         this.avatarDecorationData = null;
+        this.banner = null;
         this.communicationDisabledUntil = null;
         this.deaf = !!data.deaf;
         this.flags = 0;
@@ -93,6 +96,9 @@ export default class Member extends Base {
                 asset: data.avatar_decoration_data.asset,
                 skuID: data.avatar_decoration_data.sku_id
             } : null;
+        }
+        if (data.banner !== undefined) {
+            this.banner = data.banner;
         }
         if (data.communication_disabled_until !== undefined) {
             this.communicationDisabledUntil = data.communication_disabled_until === null ? null : new Date(data.communication_disabled_until);
@@ -232,6 +238,15 @@ export default class Member extends Base {
     }
 
     /**
+     * The url of this user's guild banner (or their user banner if no guild banner is set).
+     * @param format The format the url should be.
+     * @param size The dimensions of the image.
+     */
+    bannerURL(format?: ImageFormat, size?: number): string | null {
+        return this.banner === null ? this.user.bannerURL(format, size) : this.client.util.formatImage(Routes.MEMBER_BANNER(this.guildID, this.id, this.banner), format, size);
+    }
+
+    /**
      * Disable the `BYPASSES_VERIFICATION` flag for this member. Requires any of the following permission sets:
      * * MANAGE_GUILD
      * * MANAGE_ROLES
@@ -288,6 +303,7 @@ export default class Member extends Base {
             ...super.toJSON(),
             avatar:                     this.avatar,
             avatarDecorationData:       this.avatarDecorationData,
+            banner:                     this.banner,
             communicationDisabledUntil: this.communicationDisabledUntil?.getTime() ?? null,
             deaf:                       this.deaf,
             flags:                      this.flags,
