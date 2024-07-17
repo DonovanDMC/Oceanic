@@ -101,7 +101,7 @@ export default class ShardManager extends Collection<number, Shard> {
                             bitmask = AllNonPrivilegedIntents;
                             continue;
                         }
-                        this.client.emit("warn", `Unknown intent: ${intent}`);
+                        client.emit("warn", `Unknown intent: ${intent}`);
                     }
                 }
 
