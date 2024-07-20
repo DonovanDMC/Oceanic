@@ -23,6 +23,9 @@ export default class Dispatcher {
             for (const [event, fn] of Object.entries(DefaultDispatchEvents)) {
                 this.register(event as DispatchEvent, fn as DispatchFunction);
             }
+        } else {
+            this.register("READY", DefaultDispatchEvents.READY);
+            this.register("RESUMED", DefaultDispatchEvents.RESUMED);
         }
     }
 
