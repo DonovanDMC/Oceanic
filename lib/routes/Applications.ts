@@ -27,7 +27,17 @@ import SKU from "../structures/SKU";
 import Entitlement from "../structures/Entitlement";
 import TestEntitlement from "../structures/TestEntitlement";
 import ClientApplication from "../structures/ClientApplication";
-import type { EditApplicationOptions, RESTApplication, RawClientApplication } from "../types";
+import type {
+    ApplicationEmoji,
+    ApplicationEmojis,
+    CreateApplicationEmojiOptions,
+    EditApplicationEmojiOptions,
+    EditApplicationOptions,
+    RESTApplication,
+    RawApplicationEmoji,
+    RawApplicationEmojis,
+    RawClientApplication
+} from "../types";
 import Application from "../structures/Application";
 
 /** Various methods for interacting with application commands. Located at {@link Client#rest | Client#rest}{@link RESTManager#applications | .applications}. */
@@ -104,6 +114,27 @@ export default class Applications {
     }
 
     /**
+     * Create an emoji for an application.
+     * @param applicationID The ID of the application.
+     * @param options The options for creating the emoji.
+     * @caching This method **does not** cache its result.
+     */
+    async createEmoji(applicationID: string, options: CreateApplicationEmojiOptions): Promise<ApplicationEmoji> {
+        if (options.image) {
+            options.image = this._manager.client.util._convertImage(options.image, "image");
+        }
+
+        return this._manager.authRequest<RawApplicationEmoji>({
+            method: "POST",
+            path:   Routes.APPLICATION_EMOJIS(applicationID),
+            json:   {
+                name:  options.name,
+                image: options.image
+            }
+        }).then(emoji => this._manager.client.util.convertApplicationEmoji(emoji));
+    }
+
+    /**
      * Create a global application command.
      * @param applicationID The ID of the application.
      * @param options The options for the command.
@@ -171,6 +202,19 @@ export default class Applications {
                 sku_id:     options.skuID
             }
         }).then(data => new TestEntitlement(data, this._manager.client));
+    }
+
+    /**
+     * Delete an emoji for an application.
+     * @param applicationID The ID of the application.
+     * @param emojiID The ID of the emoji to be deleted.
+     * @caching This method **does not** cache its result.
+     */
+    async deleteEmoji(applicationID: string, emojiID: string): Promise<void> {
+        await this._manager.authRequest<null>({
+            method: "DELETE",
+            path:   Routes.APPLICATION_EMOJI(applicationID, emojiID)
+        });
     }
 
     /**
@@ -242,6 +286,21 @@ export default class Applications {
                 tags:                              options.tags
             }
         }).then(data => new Application(data, this._manager.client));
+    }
+
+    /**
+     * Edit an existing emoji for an application.
+     * @param applicationID The ID of the application.
+     * @param emojiID The ID of the emoji to be edited.
+     * @param options The options for editing the emoji.
+     * @caching This method **does not** cache its result.
+     */
+    async editEmoji(applicationID: string, emojiID: string, options: EditApplicationEmojiOptions): Promise<ApplicationEmoji> {
+        return this._manager.authRequest<RawApplicationEmoji>({
+            method: "PATCH",
+            path:   Routes.APPLICATION_EMOJI(applicationID, emojiID),
+            json:   { name: options.name }
+        }).then(emoji => this._manager.client.util.convertApplicationEmoji(emoji));
     }
 
     /**
@@ -342,6 +401,33 @@ export default class Applications {
             method: "GET",
             path:   Routes.APPLICATION
         }).then(data => new Application(data, this._manager.client));
+    }
+
+    /**
+     * Get an emoji for an application.
+     * @param applicationID The ID of the application to get the emojis of.
+     * @param emojiID The ID of the emoji to get.
+     * @caching This method **does not** cache its result.
+     */
+    async getEmoji(applicationID: string, emojiID: string): Promise<ApplicationEmoji> {
+        return this._manager.authRequest<RawApplicationEmoji>({
+            method: "GET",
+            path:   Routes.APPLICATION_EMOJI(applicationID, emojiID)
+        }).then(emoji => this._manager.client.util.convertApplicationEmoji(emoji));
+    }
+
+    /**
+     * Get the emojis for an application.
+     * @param applicationID The ID of the application to get the emojis of.
+     * @caching This method **does not** cache its result.
+     */
+    async getEmojis(applicationID: string): Promise<ApplicationEmojis> {
+        return this._manager.authRequest<RawApplicationEmojis>({
+            method: "GET",
+            path:   Routes.APPLICATION_EMOJIS(applicationID)
+        }).then(({ items }) => ({
+            items: items.map(item => this._manager.client.util.convertApplicationEmoji(item))
+        }));
     }
 
     /**

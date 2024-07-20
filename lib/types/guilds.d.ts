@@ -15,6 +15,7 @@ import type { RawScheduledEvent } from "./scheduled-events";
 import type { ClientStatus, PresenceUpdate, Activity as GatewayActivity } from "./gateway";
 import type { RawVoiceState } from "./voice";
 import { type File } from "./request-handler";
+import type { Emoji } from "./misc";
 import type {
     ChannelTypes,
     DefaultMessageNotificationLevels,
@@ -131,16 +132,6 @@ export interface RoleTags {
     integrationID?: string;
     premiumSubscriber: boolean;
     subscriptionListingID?: string;
-}
-export interface Emoji {
-    animated?: boolean;
-    available?: boolean;
-    id: string | null;
-    managed?: boolean;
-    name: string;
-    require_colons?: boolean;
-    roles?: Array<string>;
-    user?: RawUser;
 }
 export interface RawGuildEmoji extends Required<Omit<Emoji, "user" | "id">>  { id: string; user?: RawUser; }
 export interface GuildEmoji extends Omit<RawGuildEmoji, "user" | "id" | "require_colons"> { id: string; requireColons?: boolean; user?: User; }
@@ -262,7 +253,7 @@ export interface NullablePartialEmoji {
     name?: string | null;
 }
 
-export interface CreateEmojiOptions {
+export interface CreateGuildEmojiOptions {
     /** The image (buffer, or full data url). */
     image: Buffer | string;
     /** The name of the emoji. */
@@ -273,7 +264,7 @@ export interface CreateEmojiOptions {
     roles?: Array<string>;
 }
 
-export interface EditEmojiOptions {
+export interface EditGuildEmojiOptions {
     /** The name of the emoji. */
     name?: string;
     /** The reason for creating the emoji. */

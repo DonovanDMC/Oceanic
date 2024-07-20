@@ -1,7 +1,7 @@
 /** @module Types/Applications */
 import type { ImplementedChannels, InstallParams, RawOAuthGuild, RawUser } from ".";
 import type { ExclusifyUnion } from "./shared";
-import type { WithRequired } from "./misc";
+import type { Emoji, WithRequired } from "./misc";
 import type {
     ApplicationCommandOptionTypes,
     ApplicationCommandPermissionTypes,
@@ -463,4 +463,26 @@ export interface EditApplicationOptions {
     roleConnectionsVerificationURL?: string;
     /** The tags for the application. Max 5 per application, 20 characters each. */
     tags?: Array<string>;
+}
+
+export interface RawApplicationEmoji extends Required<Omit<Emoji, "user" | "id">>  { id: string; user?: RawUser; }
+export interface ApplicationEmoji extends Omit<RawApplicationEmoji, "user" | "id" | "require_colons"> { id: string; requireColons?: boolean; user?: User; }
+
+export interface RawApplicationEmojis {
+    items: Array<RawApplicationEmoji>;
+}
+
+export interface ApplicationEmojis {
+    items: Array<ApplicationEmoji>;
+}
+
+export interface CreateApplicationEmojiOptions {
+    /** The image (buffer, or full data url). */
+    image: Buffer | string;
+    /** The name of the emoji (must be unique). */
+    name: string;
+}
+
+export interface EditApplicationEmojiOptions {
+    name: string;
 }

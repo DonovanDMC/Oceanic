@@ -1,8 +1,8 @@
 /** @module REST/Guilds */
 import type {
-    CreateEmojiOptions,
+    CreateGuildEmojiOptions,
     CreateGuildOptions,
-    EditEmojiOptions,
+    EditGuildEmojiOptions,
     EditGuildOptions,
     GuildEmoji,
     ModifyChannelPositionsEntry,
@@ -334,7 +334,7 @@ export default class Guilds {
      * @caching This method **may** cache its result. The result will not be cached if the guild is not cached.
      * @caches {@link Guild#emojis | Guild#emojis}<br>{@link Client#users | Client#users} (creator, if applicable)
      */
-    async createEmoji(guildID: string, options: CreateEmojiOptions): Promise<GuildEmoji> {
+    async createEmoji(guildID: string, options: CreateGuildEmojiOptions): Promise<GuildEmoji> {
         const reason = options.reason;
         if (options.reason) {
             delete options.reason;
@@ -351,7 +351,7 @@ export default class Guilds {
                 roles: options.roles
             },
             reason
-        }).then(data => this._manager.client.guilds.get(guildID)?.emojis.update(data) ?? this._manager.client.util.convertEmoji(data));
+        }).then(data => this._manager.client.guilds.get(guildID)?.emojis.update(data) ?? this._manager.client.util.convertGuildEmoji(data));
     }
 
     /**
@@ -767,7 +767,7 @@ export default class Guilds {
      * @caching This method **may** cache its result. The result will not be cached if the guild is not cached.
      * @caches {@link Guild#emojis | Guild#emojis}
      */
-    async editEmoji(guildID: string, emojiID: string, options: EditEmojiOptions): Promise<GuildEmoji> {
+    async editEmoji(guildID: string, emojiID: string, options: EditGuildEmojiOptions): Promise<GuildEmoji> {
         const reason = options.reason;
         if (options.reason) {
             delete options.reason;
@@ -780,7 +780,7 @@ export default class Guilds {
                 roles: options.roles
             },
             reason
-        }).then(data => this._manager.client.guilds.get(guildID)?.emojis.update(data) ?? this._manager.client.util.convertEmoji(data));
+        }).then(data => this._manager.client.guilds.get(guildID)?.emojis.update(data) ?? this._manager.client.util.convertGuildEmoji(data));
     }
 
     /**
@@ -1337,7 +1337,7 @@ export default class Guilds {
         return this._manager.authRequest<RawGuildEmoji>({
             method: "GET",
             path:   Routes.GUILD_EMOJI(guildID, emojiID)
-        }).then(data => this._manager.client.guilds.get(guildID)?.emojis.update(data) ?? this._manager.client.util.convertEmoji(data));
+        }).then(data => this._manager.client.guilds.get(guildID)?.emojis.update(data) ?? this._manager.client.util.convertGuildEmoji(data));
     }
 
     /**
@@ -1353,7 +1353,7 @@ export default class Guilds {
         }).then(data => {
             const guild = this._manager.client.guilds.get(guildID);
             guild?.emojis.clear();
-            return data.map(emoji => guild?.emojis.update(emoji) ?? this._manager.client.util.convertEmoji(emoji));
+            return data.map(emoji => guild?.emojis.update(emoji) ?? this._manager.client.util.convertGuildEmoji(emoji));
         });
     }
 

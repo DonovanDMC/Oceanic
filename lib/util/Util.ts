@@ -62,7 +62,9 @@ import type {
     Uncached,
     RawBaseEntitlement,
     RawEntitlement,
-    RawTestEntitlement
+    RawTestEntitlement,
+    ApplicationEmoji,
+    RawApplicationEmoji
 } from "../types";
 import Message from "../structures/Message";
 import Entitlement from "../structures/Entitlement";
@@ -278,7 +280,11 @@ export default class Util {
         })) as never;
     }
 
-    convertEmoji(raw: RawGuildEmoji): GuildEmoji {
+    convertApplicationEmoji(raw: RawApplicationEmoji): ApplicationEmoji {
+        return this.convertGuildEmoji(raw);
+    }
+
+    convertGuildEmoji(raw: RawGuildEmoji): GuildEmoji {
         return {
             animated:      raw.animated,
             available:     raw.available,

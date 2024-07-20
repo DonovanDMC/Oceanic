@@ -219,7 +219,7 @@ export async function GUILD_EMOJIS_UPDATE(data: DispatchEventMap["GUILD_EMOJIS_U
     shard.client.emit(
         "guildEmojisUpdate",
         guild ?? { id: data.guild_id },
-        guild?.emojis?.toArray() ?? data.emojis.map(emoji => shard.client.util.convertEmoji(emoji)),
+        guild?.emojis?.toArray() ?? data.emojis.map(emoji => shard.client.util.convertGuildEmoji(emoji)),
         oldEmojis
     );
 }

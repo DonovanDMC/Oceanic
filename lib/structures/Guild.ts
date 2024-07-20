@@ -59,11 +59,11 @@ import type {
     BeginPruneOptions,
     CreateBanOptions,
     CreateChannelOptions,
-    CreateEmojiOptions,
+    CreateGuildEmojiOptions,
     CreateRoleOptions,
     EditCurrentMemberOptions,
     EditCurrentUserVoiceStateOptions,
-    EditEmojiOptions,
+    EditGuildEmojiOptions,
     EditGuildOptions,
     EditMemberOptions,
     EditRoleOptions,
@@ -277,7 +277,7 @@ export default class Guild extends Base {
         this.defaultMessageNotifications = data.default_message_notifications;
         this.description = null;
         this.discoverySplash = null;
-        this.emojis = new SimpleCollection(rawEmoji => this.client.util.convertEmoji(rawEmoji), client.util._getLimit("emojis", this.id), "merge");
+        this.emojis = new SimpleCollection(rawEmoji => this.client.util.convertGuildEmoji(rawEmoji), client.util._getLimit("emojis", this.id), "merge");
         this.explicitContentFilter = data.explicit_content_filter;
         this.features = [];
         this.icon = null;
@@ -759,7 +759,7 @@ export default class Guild extends Base {
      * Create an emoji in this guild.
      * @param options The options for creating the emoji.
      */
-    async createEmoji(options: CreateEmojiOptions): Promise<GuildEmoji> {
+    async createEmoji(options: CreateGuildEmojiOptions): Promise<GuildEmoji> {
         return this.client.rest.guilds.createEmoji(this.id, options);
     }
 
@@ -965,7 +965,7 @@ export default class Guild extends Base {
      * Edit an existing emoji in this guild.
      * @param options The options for editing the emoji.
      */
-    async editEmoji(emojiID: string, options: EditEmojiOptions): Promise<GuildEmoji> {
+    async editEmoji(emojiID: string, options: EditGuildEmojiOptions): Promise<GuildEmoji> {
         return this.client.rest.guilds.editEmoji(this.id, emojiID, options);
     }
 

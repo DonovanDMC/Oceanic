@@ -23,7 +23,11 @@ import type {
     RawTestEntitlement,
     SearchEntitlementsOptions,
     RawClientApplication,
-    EditApplicationOptions
+    EditApplicationOptions,
+    ApplicationEmoji,
+    ApplicationEmojis,
+    CreateApplicationEmojiOptions,
+    EditApplicationEmojiOptions
 } from "../types/applications";
 import type { JSONClientApplication } from "../types/json";
 import type { ApplicationCommandTypes } from "../Constants";
@@ -82,6 +86,15 @@ export default class ClientApplication extends Base {
     }
 
     /**
+     * Create an emoji for this application.
+     * @param options The options for creating the emoji.
+     * @caching This method **does not** cache its result.
+     */
+    async createEmoji(options: CreateApplicationEmojiOptions): Promise<ApplicationEmoji> {
+        return this.client.rest.applications.createEmoji(this.id, options);
+    }
+
+    /**
      * Create a global application command.
      * @param options The options for creating the command.
      */
@@ -104,6 +117,14 @@ export default class ClientApplication extends Base {
      */
     async createTestEntitlement(options: CreateTestEntitlementOptions): Promise<TestEntitlement> {
         return this.client.rest.applications.createTestEntitlement(this.id, options);
+    }
+    /**
+     * Delete an emoji for this application.
+     * @param emojiID The ID of the emoji to be deleted.
+     * @caching This method **does not** cache its result.
+     */
+    async deleteEmoji(emojiID: string): Promise<void> {
+        return this.client.rest.applications.deleteEmoji(this.id, emojiID);
     }
 
     /**
@@ -140,6 +161,16 @@ export default class ClientApplication extends Base {
     }
 
     /**
+     * Edit an existing emoji for this application.
+     * @param emojiID The ID of the emoji to be edited.
+     * @param options The options for editing the emoji.
+     * @caching This method **does not** cache its result.
+     */
+    async editEmoji(emojiID: string, options: EditApplicationEmojiOptions): Promise<ApplicationEmoji> {
+        return this.client.rest.applications.editEmoji(this.id, emojiID, options);
+    }
+
+    /**
      * Edit a global application command.
      * @param commandID The ID of the command.
      * @param options The options for editing the command.
@@ -166,6 +197,21 @@ export default class ClientApplication extends Base {
      */
     async editGuildCommandPermissions(guildID: string, commandID: string, options: EditApplicationCommandPermissionsOptions): Promise<RESTGuildApplicationCommandPermissions> {
         return this.client.rest.applications.editGuildCommandPermissions(this.id, guildID, commandID, options);
+    }
+
+    /**
+     * Get an emoji for this application.
+     * @param emojiID The ID of the emoji to get.
+     */
+    async getEmoji(emojiID: string): Promise<ApplicationEmoji> {
+        return this.client.rest.applications.getEmoji(this.id, emojiID);
+    }
+
+    /**
+     * Get the emojis for this application.
+     */
+    async getEmojis(): Promise<ApplicationEmojis> {
+        return this.client.rest.applications.getEmojis(this.id);
     }
 
     /**

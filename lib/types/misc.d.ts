@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /** @module Types/Miscellaneous */
 
+import type { RawUser } from "./users";
 import type Client from "../Client";
 
 export type StringMap<T extends Record<string, any>> = { [K in keyof T]: `${T[K]}` };
@@ -25,4 +26,15 @@ export interface RefreshAttachmentURLsResponse {
 export interface RefreshedAttachment {
     original: string;
     refreshed: string;
+}
+
+export interface Emoji {
+    animated?: boolean;
+    available?: boolean;
+    id: string | null;
+    managed?: boolean;
+    name: string;
+    require_colons?: boolean;
+    roles?: Array<string>;
+    user?: RawUser;
 }

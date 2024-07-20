@@ -149,6 +149,8 @@ export const ENTITLEMENTS                          = (applicationID: string) => 
 export const ENTITLEMENT                           = (applicationID: string, entitlementID: string) => encode`/applications/${applicationID}/entitlements/${entitlementID}`;
 export const CONSUME_ENTITLEMENT                   = (applicationID: string, entitlementID: string) => encode`/applications/${applicationID}/entitlements/${entitlementID}/consume`;
 export const SKUS                                  = (applicationID: string) => encode`/applications/${applicationID}/skus`;
+export const APPLICATION_EMOJIS                    = (applicationID: string) => encode`/applications/${applicationID}/emojis`;
+export const APPLICATION_EMOJI                     = (applicationID: string, emojiID: string) => encode`/applications/${applicationID}/emojis/${emojiID}`;
 
 // Misc
 export const GATEWAY                   = "/gateway";
