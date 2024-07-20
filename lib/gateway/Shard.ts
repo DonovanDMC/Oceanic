@@ -132,7 +132,6 @@ export default class Shard extends TypedEmitter<ShardEvents> {
     }
 
     private _ready(data: ReadyPacket["d"]): void {
-
         this.connectAttempts = 0;
         this.reconnectInterval = 1000;
         this.connecting = false;
