@@ -46,7 +46,7 @@
     "@mxssfd/typedoc-theme": "^1.1.3",
     "@types/node": "^20.14.2",
     "@types/pako": "^2.0.3",
-    "@types/ws": "^8.5.10",
+    "@types/ws": "^8.5.12",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.21.0",
     "erlpack": "^0.1.4",
@@ -71,7 +71,7 @@
   },
   "dependencies": {
     "tslib": "^2.6.2",
-    "ws": "^8.17.0"
+    "ws": "^8.18.0"
   },
   "engines": {
     "node": ">=18.13.0"
