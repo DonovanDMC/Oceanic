@@ -372,7 +372,7 @@ export interface Embed extends EmbedBase {
     video?: EmbedVideo;
 }
 
-export type EmbedType = "rich" | "image" | "video" | "gifv" | "article" | "link";
+export type EmbedType = "rich" | "image" | "video" | "gifv" | "article" | "link" | "poll_result";
 
 export interface EmbedAuthorBase {
     name: string;
