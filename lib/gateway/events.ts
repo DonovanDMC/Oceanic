@@ -384,20 +384,20 @@ export async function GUILD_SCHEDULED_EVENT_USER_REMOVE(data: DispatchEventMap["
 }
 
 export async function GUILD_SOUNDBOARD_SOUND_CREATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_CREATE"], shard: Shard): Promise<void> {
-    const guild = shard.client.guilds.get(data.guild_id!);
+    const guild = shard.client.guilds.get(data.guild_id);
     const soundboardSound = guild?.soundboardSounds.update(data) ?? new Soundboard(data, shard.client);
     shard.client.emit("guildSoundboardSoundCreate", soundboardSound);
 }
 
 export async function GUILD_SOUNDBOARD_SOUND_DELETE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_DELETE"], shard: Shard): Promise<void> {
-    const guild = shard.client.guilds.get(data.guild_id!);
+    const guild = shard.client.guilds.get(data.guild_id);
     const soundboardSound = guild?.soundboardSounds.get(data.sound_id);
     guild?.soundboardSounds.delete(data.sound_id);
     shard.client.emit("guildSoundboardSoundDelete", soundboardSound ?? { id: data.sound_id });
 }
 
 export async function GUILD_SOUNDBOARD_SOUND_UPDATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_UPDATE"], shard: Shard): Promise<void> {
-    const guild = shard.client.guilds.get(data.guild_id!);
+    const guild = shard.client.guilds.get(data.guild_id);
     const oldSoundboardSound = guild?.soundboardSounds.get(data.sound_id)?.toJSON() ?? null;
     const soundboardSound = guild?.soundboardSounds.update(data) ?? new Soundboard(data, shard.client);
     shard.client.emit("guildSoundboardSoundUpdate", soundboardSound, oldSoundboardSound);

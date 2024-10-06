@@ -30,6 +30,7 @@ import type {
     RawGroupChannel,
     RawGuildChannel,
     RawMessage,
+    RawSoundboard,
     RawThreadChannel,
     RawThreadMember
 } from "./channels";
@@ -345,6 +346,24 @@ export interface GuildScheduledEventUserRemovePacket extends BaseDispatchPacket 
     t: "GUILD_SCHEDULED_EVENT_USER_REMOVE";
 }
 
+export interface GuildSoundboardSoundCreatePacket extends BaseDispatchPacket {
+    d: RawSoundboard & { guild_id: string };
+    t: "GUILD_SOUNDBOARD_SOUND_CREATE";
+}
+
+export interface GuildSoundboardSoundUpdatePacket extends BaseDispatchPacket {
+    d: RawSoundboard & { guild_id: string };
+    t: "GUILD_SOUNDBOARD_SOUND_UPDATE";
+}
+
+export interface GuildSoundboardSoundDeletePacket extends BaseDispatchPacket {
+    d: {
+        guild_id: string;
+        sound_id: string;
+    };
+    t: "GUILD_SOUNDBOARD_SOUND_DELETE";
+}
+
 export interface IntegrationCreatePacket extends BaseDispatchPacket {
     d: RawIntegration & { guild_id: string; };
     t: "INTEGRATION_CREATE";
@@ -578,7 +597,7 @@ ThreadCreatePacket | ThreadDeletePacket | ThreadUpdatePacket | ThreadListSyncPac
 GuildBanAddPacket | GuildBanRemovePacket | GuildEmojisUpdatePacket | GuildStickersUpdatePacket | GuildIntegrationsUpdatePacket |
 GuildMemberAddPacket | GuildMemberRemovePacket | GuildMemberUpdatePacket | GuildMembersChunkPacket |
 GuildRoleCreatePacket | GuildRoleDeletePacket | GuildRoleUpdatePacket |
-GuildScheduledEventCreatePacket | GuildScheduledEventDeletePacket | GuildScheduledEventUpdatePacket | GuildScheduledEventUserAddPacket | GuildScheduledEventUserRemovePacket |
+GuildScheduledEventCreatePacket | GuildScheduledEventDeletePacket | GuildScheduledEventUpdatePacket | GuildScheduledEventUserAddPacket | GuildScheduledEventUserRemovePacket | GuildSoundboardSoundCreatePacket | GuildSoundboardSoundDeletePacket | GuildSoundboardSoundUpdatePacket |
 IntegrationCreatePacket | IntegrationDeletePacket | IntegrationUpdatePacket |
 InviteCreatePacket | InviteDeletePacket |
 MessageCreatePacket | MessageDeletePacket | MessageDeleteBulkPacket | MessageUpdatePacket | MessageReactionAddPacket | MessageReactionRemovePacket | MessageReactionRemoveAllPacket | MessageReactionRemoveEmojiPacket |
