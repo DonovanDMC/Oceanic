@@ -100,7 +100,6 @@ export const VOICE_STATUS                            = (channelID: string) => en
 export const POLL_ANSWER_USERS                       = (channelID: string, pollID: string, answerID: number) => encode`/channels/${channelID}/polls/${pollID}/answers/${answerID}`;
 export const POLL_EXPIRE                             = (channelID: string, pollID: string) => encode`/channels/${channelID}/polls/${pollID}/expire`;
 export const SEND_SOUNDBOARD_SOUND                   = (channelID: string) => encode`/channels/${channelID}/send-soundboard-sound`;
-export const SOUNDBOARD_DEFAULT_SOUNDS               = "/soundboard-default-sounds";
 
 // OAuth
 export const OAUTH_APPLICATION         = "/oauth2/applications/@me";
@@ -164,6 +163,7 @@ export const USER                      = (userID: string) => encode`/users/${use
 export const MESSAGE_LINK              = (guildID: string, channelID: string, messageID: string) => encode`/channels/${guildID}/${channelID}/${messageID}`;
 export const STICKER_PACKS             = "/sticker-packs";
 export const INVITE                    = (code: string) => encode`/invites/${code}`;
+export const SOUNDBOARD_DEFAULT_SOUNDS = "/soundboard-default-sounds";
 export const STAGE_INSTANCES           = "/stage-instances";
 export const STAGE_INSTANCE            = (channelID: string) => encode`/stage-instances/${channelID}`;
 export const REFRESH_ATTACHMENT_URLS   = "/attachments/refresh-urls";

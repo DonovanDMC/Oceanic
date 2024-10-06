@@ -931,6 +931,13 @@ export interface GetReactionsOptions {
     type?: ReactionType;
 }
 
+export interface SendSoundboardSoundOptions {
+    /** The ID of the soundboard sound to send. */
+    soundID: string;
+    /** The ID of the guild the soundboard sound is from. */
+    sourceGuildID?: string;
+}
+
 export interface EditMessageOptions extends Nullable<Pick<CreateMessageOptions, "content" | "embeds" | "allowedMentions" | "components" | "attachments" | "files" | "flags">> {}
 
 export interface EditPermissionOptions {

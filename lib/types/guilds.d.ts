@@ -696,6 +696,19 @@ export interface CreateStickerOptions {
     tags: string;
 }
 
+export interface EditSoundboardSoundOptions {
+    /** The ID of the emoji of the soundboard sound. */
+    emojiID?: string;
+    /** The name of the emoji of the soundboard sound. */
+    emojiName?: string;
+    /** The name of the soundboard sound. */
+    name?: string;
+    /** The reason for editing the soundboard sound. */
+    reason?: string;
+    /** The volume of the soundboard sound. */
+    volume?: number;
+}
+
 export interface EditStickerOptions {
     /** The description of the sticker. */
     description?: string | null;
