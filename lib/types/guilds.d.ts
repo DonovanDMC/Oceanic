@@ -683,17 +683,19 @@ export interface EditMFALevelOptions {
     reason?: string;
 }
 
-export interface CreateStickerOptions {
-    /** The description of the sticker. */
-    description: string;
-    /** The file contents of the sticker. PNG, APNG, or LOTTIE (only `VERIFIED` & `PARTNERED` servers can use lottie). */
-    file: File;
-    /** The name of the sticker. */
+export interface CreateSoundboardSoundOptions {
+    /** The ID of the emoji of the soundboard sound. */
+    emojiID?: string;
+    /** The name of the emoji of the soundboard sound. */
+    emojiName?: string;
+    /** The name of the soundboard sound. */
     name: string;
-    /** The reason for creating the sticker. */
+    /** The reason for creating the soundboard sound. */
     reason?: string;
-    /** The autocomplete/suggestions tags for the sticker. */
-    tags: string;
+    /** The mp3 or ogg sound data. */
+    sound: File;
+    /** The volume of the soundboard sound. */
+    volume?: number;
 }
 
 export interface EditSoundboardSoundOptions {
@@ -707,6 +709,19 @@ export interface EditSoundboardSoundOptions {
     reason?: string;
     /** The volume of the soundboard sound. */
     volume?: number;
+}
+
+export interface CreateStickerOptions {
+    /** The description of the sticker. */
+    description: string;
+    /** The file contents of the sticker. PNG, APNG, or LOTTIE (only `VERIFIED` & `PARTNERED` servers can use lottie). */
+    file: File;
+    /** The name of the sticker. */
+    name: string;
+    /** The reason for creating the sticker. */
+    reason?: string;
+    /** The autocomplete/suggestions tags for the sticker. */
+    tags: string;
 }
 
 export interface EditStickerOptions {
