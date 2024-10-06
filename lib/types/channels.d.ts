@@ -722,6 +722,17 @@ export interface RawMessage {
     webhook_id?: string;
 }
 
+export interface RawSoundboard {
+    available: boolean;
+    emoji_id: string | null;
+    emoji_name: string | null;
+    guild_id?: string;
+    name: string;
+    sound_id: string;
+    user?: RawUser;
+    volume: number;
+}
+
 export interface RawCall {
     ended_timestamp?: string | null;
     participants: Array<string>;

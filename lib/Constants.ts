@@ -244,6 +244,7 @@ export const GuildFeatures = [
     "MONETIZATION_ENABLED",
     "MORE_EMOJI",
     "MORE_EMOJIS",
+    "MORE_SOUNDBOARD",
     "MORE_STICKERS",
     "NEW_THREAD_PERMISSIONS",
     "NEWS",
