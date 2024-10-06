@@ -34,6 +34,7 @@ import Integration from "../structures/Integration";
 import VoiceState from "../structures/VoiceState";
 import AuditLogEntry from "../structures/AuditLogEntry";
 import type User from "../structures/User";
+import Soundboard from "../structures/Soundboard";
 
 export async function APPLICATION_COMMAND_PERMISSIONS_UPDATE(data: DispatchEventMap["APPLICATION_COMMAND_PERMISSIONS_UPDATE"], shard: Shard): Promise<void> {
     shard.client.emit("applicationCommandPermissionsUpdate", shard.client.guilds.get(data.guild_id) ?? { id: data.guild_id }, {
@@ -380,6 +381,26 @@ export async function GUILD_SCHEDULED_EVENT_USER_REMOVE(data: DispatchEventMap["
     }
     const user = shard.client.users.get(data.user_id) ?? { id: data.user_id };
     shard.client.emit("guildScheduledEventUserRemove", event ?? { id: data.guild_scheduled_event_id }, user ?? { id: data.user_id });
+}
+
+export async function GUILD_SOUNDBOARD_SOUND_CREATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_CREATE"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id!);
+    const soundboardSound = guild?.soundboardSounds.update(data) ?? new Soundboard(data, shard.client);
+    shard.client.emit("guildSoundboardSoundCreate", soundboardSound);
+}
+
+export async function GUILD_SOUNDBOARD_SOUND_DELETE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_DELETE"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id!);
+    const soundboardSound = guild?.soundboardSounds.get(data.sound_id);
+    guild?.soundboardSounds.delete(data.sound_id);
+    shard.client.emit("guildSoundboardSoundDelete", soundboardSound ?? { id: data.sound_id });
+}
+
+export async function GUILD_SOUNDBOARD_SOUND_UPDATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_UPDATE"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id!);
+    const oldSoundboardSound = guild?.soundboardSounds.get(data.sound_id)?.toJSON() ?? null;
+    const soundboardSound = guild?.soundboardSounds.update(data) ?? new Soundboard(data, shard.client);
+    shard.client.emit("guildSoundboardSoundUpdate", soundboardSound, oldSoundboardSound);
 }
 
 export async function GUILD_STICKERS_UPDATE(data: DispatchEventMap["GUILD_STICKERS_UPDATE"], shard: Shard): Promise<void> {

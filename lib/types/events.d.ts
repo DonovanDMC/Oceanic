@@ -35,7 +35,8 @@ import type {
     JSONUser,
     JSONVoiceState,
     JSONEntitlement,
-    JSONTestEntitlement
+    JSONTestEntitlement,
+    JSONSoundboard
 } from "./json";
 import type { GuildApplicationCommandPermissions } from "./applications";
 import type {
@@ -68,6 +69,7 @@ import type GroupChannel from "../structures/GroupChannel";
 import type Entitlement from "../structures/Entitlement";
 import type TestEntitlement from "../structures/TestEntitlement";
 import type { JSONChannelTypeMap } from "../Constants";
+import type Soundboard from "../structures/Soundboard";
 
 
 export interface ClientEvents {
@@ -143,6 +145,12 @@ export interface ClientEvents {
     guildScheduledEventUserAdd: [event: GuildScheduledEvent | Uncached, user: User | Uncached];
     /** @event Emitted when a user unsubscribes from a scheduled event. Requires the `GUILD_SCHEDULED_EVENTS` intent. */
     guildScheduledEventUserRemove: [event: GuildScheduledEvent | Uncached, user: User | Uncached];
+    /** @event Emitted when a guild's soundboard sound is created. Requires the `GUILD_EXPRESSIONS` intent. */
+    guildSoundboardSoundCreate: [soundboardSound: Soundboard];
+    /** @event Emitted when a guild's soundboard sound is deleted. Requires the `GUILD_EXPRESSIONS` intent. */
+    guildSoundboardSoundDelete: [soundboardSound: Soundboard | Uncached];
+    /** @event Emitted when a guild's soundboard sound is updated. Requires the `GUILD_EXPRESSIONS` intent. */
+    guildSoundboardSoundUpdate: [soundboardSound: Soundboard, oldSoundboardSound: JSONSoundboard | null];
     /** @event Emitted when a guild's stickers are updated. Requires the `GUILD_EXPRESSIONS` intent. */
     guildStickersUpdate: [guild: Guild | Uncached, stickers: Array<Sticker>, oldStickers: Array<Sticker> | null];
     /** @event Emitted when a guild becomes unavailable. Requires the `GUILDS` intent. */
