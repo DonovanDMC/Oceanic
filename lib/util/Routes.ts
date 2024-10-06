@@ -101,6 +101,7 @@ export const POLL_ANSWER_USERS                       = (channelID: string, pollI
 export const POLL_EXPIRE                             = (channelID: string, pollID: string) => encode`/channels/${channelID}/polls/${pollID}/expire`;
 export const SEND_SOUNDBOARD_SOUND                   = (channelID: string) => encode`/channels/${channelID}/send-soundboard-sound`;
 export const SOUNDBOARD_DEFAULT_SOUNDS               = "/soundboard-default-sounds";
+
 // OAuth
 export const OAUTH_APPLICATION         = "/oauth2/applications/@me";
 export const OAUTH_AUTHORIZE           = "/oauth2/authorize";
