@@ -67,6 +67,8 @@ export const GUILD_STICKERS			     = (guildID: string) => encode`/guilds/${guild
 export const GUILD_ONBOARDING            = (guildID: string) => encode`/guilds/${guildID}/onboarding`;
 export const GUILD_INCIDENT_ACTIONS      = (guildID: string) => encode`/guilds/${guildID}/incident-actions`;
 export const GUILD_BULK_BAN              = (guildID: string) => encode`/guilds/${guildID}/bulk-ban`;
+export const SOUNDBOARD_SOUNDS           = (guildID: string) => encode`/guilds/${guildID}/soundboard-sounds`;
+export const SOUNDBOARD_SOUND            = (guildID: string, soundID: string) => encode`/guilds/${guildID}/soundboard-sounds/${soundID}`;
 
 // Channels
 export const CHANNEL                                 = (channelID: string) => encode`/channels/${channelID}`;
@@ -97,7 +99,8 @@ export const GUILD_VOICE_REGIONS                     = (guildID: string) => enco
 export const VOICE_STATUS                            = (channelID: string) => encode`/channels/${channelID}/voice-status`;
 export const POLL_ANSWER_USERS                       = (channelID: string, pollID: string, answerID: number) => encode`/channels/${channelID}/polls/${pollID}/answers/${answerID}`;
 export const POLL_EXPIRE                             = (channelID: string, pollID: string) => encode`/channels/${channelID}/polls/${pollID}/expire`;
-
+export const SEND_SOUNDBOARD_SOUND                   = (channelID: string) => encode`/channels/${channelID}/send-soundboard-sound`;
+export const SOUNDBOARD_DEFAULT_SOUNDS               = "/soundboard-default-sounds";
 // OAuth
 export const OAUTH_APPLICATION         = "/oauth2/applications/@me";
 export const OAUTH_AUTHORIZE           = "/oauth2/authorize";

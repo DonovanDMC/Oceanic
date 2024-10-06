@@ -1,8 +1,8 @@
 /** @module Soundboard */
-import Client from "../Client";
-import { RawSoundboard } from "../types";
 import Base from "./Base";
 import User from "./User";
+import type Client from "../Client";
+import { type RawSoundboard } from "../types";
 
 /** Represents a soundboard. */
 export default class Soundboard extends Base {
@@ -23,14 +23,14 @@ export default class Soundboard extends Base {
     /** The volume of the soundboard sound. */
     volume: number;
     constructor(data: RawSoundboard, client: Client) {
-      super(data.sound_id, client);
-      this.available = data.available;
-      this.emojiID = data.emoji_id;
-      this.emojiName = data.emoji_name;
-      this.guildID = data.guild_id;
-      this.name = data.name;
-      this.soundID = data.sound_id;
-      this.user = data.user ? new User(data.user, client) : undefined;
-      this.volume = data.volume;
+        super(data.sound_id, client);
+        this.available = data.available;
+        this.emojiID = data.emoji_id;
+        this.emojiName = data.emoji_name;
+        this.guildID = data.guild_id;
+        this.name = data.name;
+        this.soundID = data.sound_id;
+        this.user = data.user ? new User(data.user, client) : undefined;
+        this.volume = data.volume;
     }
 }
