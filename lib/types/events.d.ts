@@ -115,7 +115,7 @@ export interface ClientEvents {
     guildCreate: [guild: Guild];
     /** @event Emitted when the client leaves a guild. Requires the `GUILDS` intent. */
     guildDelete: [guild: Guild | Uncached];
-    /** @event Emitted when a guild's emojis are updated. Requires the `GUILD_EMOJIS_AND_STICKERS` intent. */
+    /** @event Emitted when a guild's emojis are updated. Requires the `GUILD_EXPRESSIONS` intent. */
     guildEmojisUpdate: [guild: Guild | Uncached, emojis: Array<GuildEmoji>, oldEmojis: Array<GuildEmoji> | null];
     /** @event Emitted when a guild's integrations are updated. Requires the `GUILD_INTEGRATIONS` intent. */
     guildIntegrationsUpdate: [guild: Guild | Uncached];
@@ -143,7 +143,7 @@ export interface ClientEvents {
     guildScheduledEventUserAdd: [event: GuildScheduledEvent | Uncached, user: User | Uncached];
     /** @event Emitted when a user unsubscribes from a scheduled event. Requires the `GUILD_SCHEDULED_EVENTS` intent. */
     guildScheduledEventUserRemove: [event: GuildScheduledEvent | Uncached, user: User | Uncached];
-    /** @event Emitted when a guild's stickers are updated. Requires the `GUILD_EMOJIS_AND_STICKERS` intent. */
+    /** @event Emitted when a guild's stickers are updated. Requires the `GUILD_EXPRESSIONS` intent. */
     guildStickersUpdate: [guild: Guild | Uncached, stickers: Array<Sticker>, oldStickers: Array<Sticker> | null];
     /** @event Emitted when a guild becomes unavailable. Requires the `GUILDS` intent. */
     guildUnavailable: [guild: UnavailableGuild];
