@@ -347,12 +347,12 @@ export interface GuildScheduledEventUserRemovePacket extends BaseDispatchPacket 
 }
 
 export interface GuildSoundboardSoundCreatePacket extends BaseDispatchPacket {
-    d: RawSoundboard & { guild_id: string };
+    d: RawSoundboard & { guild_id: string; };
     t: "GUILD_SOUNDBOARD_SOUND_CREATE";
 }
 
 export interface GuildSoundboardSoundUpdatePacket extends BaseDispatchPacket {
-    d: RawSoundboard & { guild_id: string };
+    d: RawSoundboard & { guild_id: string; };
     t: "GUILD_SOUNDBOARD_SOUND_UPDATE";
 }
 

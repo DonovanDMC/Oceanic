@@ -693,7 +693,7 @@ export interface CreateSoundboardSoundOptions {
     /** The reason for creating the soundboard sound. */
     reason?: string;
     /** The mp3 or ogg sound data. */
-    sound: File;
+    sound: Buffer | string;
     /** The volume of the soundboard sound. */
     volume?: number;
 }

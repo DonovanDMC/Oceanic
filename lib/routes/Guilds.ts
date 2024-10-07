@@ -62,7 +62,9 @@ import type {
     MemberSearchPaginationFilter,
     RawMemberSearchResults,
     MemberSearchResults,
-    MemberSearchNotIndexedResult
+    MemberSearchNotIndexedResult,
+    EditSoundboardSoundOptions,
+    CreateSoundboardSoundOptions
 } from "../types/guilds";
 import * as Routes from "../util/Routes";
 import type { CreateAutoModerationRuleOptions, EditAutoModerationRuleOptions, RawAutoModerationRule } from "../types/auto-moderation";
@@ -88,6 +90,7 @@ import type {
     PartialInviteChannel,
     RawGuildChannel,
     RawInvite,
+    RawSoundboard,
     RawThreadChannel,
     RawThreadMember
 } from "../types/channels";
@@ -103,6 +106,7 @@ import type Member from "../structures/Member";
 import type { Uncached } from "../types/shared";
 import ApplicationCommand from "../structures/ApplicationCommand";
 import VoiceState from "../structures/VoiceState";
+import Soundboard from "../structures/Soundboard";
 import { setTimeout } from "node:timers/promises";
 
 /** Various methods for interacting with guilds. Located at {@link Client#rest | Client#rest}{@link RESTManager#guilds | .guilds}. */
@@ -453,6 +457,32 @@ export default class Guilds {
     }
 
     /**
+     * Create a soundboard sound
+     * @param guildID The ID of the guild
+     * @param options The options for creating the soundboard sound
+     * @caching This method **may** cache its result. The result will not be cached if the guild is not cached.
+     * @caches {@link Guild#soundboardSounds | Guild#soundboardSounds}
+     */
+    async createSoundboardSound(guildID: string, options: CreateSoundboardSoundOptions): Promise<Soundboard> {
+        const reason = options.reason;
+        if (options.sound) {
+            options.sound = this._manager.client.util._convertSound(options.sound, "sound");
+        }
+        return this._manager.authRequest<RawSoundboard>({
+            method: "POST",
+            path:   Routes.SOUNDBOARD_SOUNDS(guildID),
+            json:   {
+                emoji_id:   options.emojiID,
+                emoji_name: options.emojiName,
+                name:       options.name,
+                sound:      options.sound,
+                volume:     options.volume
+            },
+            reason
+        }).then(data => this._manager.client.guilds.get(guildID)?.soundboardSounds.update(data) ?? new Soundboard(data, this._manager.client));
+    }
+
+    /**
      * Create a sticker.
      * @param guildID The ID of the guild.
      * @param options The options for creating the sticker.
@@ -586,6 +616,21 @@ export default class Guilds {
         await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.GUILD_SCHEDULED_EVENT(guildID, eventID),
+            reason
+        });
+    }
+
+    /**
+     *
+     * @param guildID The ID of the guild.
+     * @param soundID The ID of the soundboard sound to delete.
+     * @param reason The reason for deleting the soundboard sound.
+     * @caching This method **does not** cache its result.
+     */
+    async deleteSoundboardSound(guildID: string, soundID: string, reason?: string): Promise<void> {
+        await this._manager.authRequest<null>({
+            method: "DELETE",
+            path:   Routes.SOUNDBOARD_SOUND(guildID, soundID),
             reason
         });
     }
@@ -1009,6 +1054,29 @@ export default class Guilds {
             },
             reason
         }).then(data => this._manager.client.guilds.get(guildID)?.scheduledEvents.update(data) ?? new GuildScheduledEvent(data, this._manager.client));
+    }
+
+    /**
+     * Edit a soundboard sound.
+     * @param guildID The ID of the guild.
+     * @param soundID The ID of the soundboard sound to edit.
+     * @param options The options for editing the soundboard sound.
+     * @caching This method **may** cache its result. The result will not be cached if the guild is not cached.
+     * @caches {@link Guild#soundboardSounds | Guild#soundboardSounds}
+     */
+    async editSoundboardSound(guildID: string, soundID: string, options: EditSoundboardSoundOptions): Promise<Soundboard> {
+        const reason = options.reason;
+        return this._manager.authRequest<RawSoundboard>({
+            method: "PATCH",
+            path:   Routes.SOUNDBOARD_SOUND(guildID, soundID),
+            json:   {
+                emoji_id:   options.emojiID,
+                emoji_name: options.emojiName,
+                name:       options.name,
+                volume:     options.volume
+            },
+            reason
+        }).then(data => this._manager.client.guilds.get(guildID)?.soundboardSounds.update(data) ?? new Soundboard(data, this._manager.client));
     }
 
     /**
@@ -1600,6 +1668,35 @@ export default class Guilds {
             path:   Routes.GUILD_SCHEDULED_EVENTS(guildID),
             query
         }).then(data => data.map(d => guild?.scheduledEvents.update(d) ?? new GuildScheduledEvent(d, this._manager.client)));
+    }
+
+    /**
+     * Get a soundboard sound.
+     * @param guildID The ID of the guild.
+     * @param soundID The ID of the soundboard sound to get.
+     * @caching This method **may** cache its result. The result will not be cached if the guild is not cached.
+     * @caches {@link Guild#soundboardSounds | Guild#soundboardSounds}
+     */
+    async getSoundboardSound(guildID: string, soundID: string): Promise<Soundboard> {
+        const guild = this._manager.client.guilds.get(guildID);
+        return this._manager.authRequest<RawSoundboard>({
+            method: "GET",
+            path:   Routes.SOUNDBOARD_SOUND(guildID, soundID)
+        }).then(data => guild?.soundboardSounds.update(data) ?? new Soundboard(data, this._manager.client));
+    }
+
+    /**
+     * Get a guild's soundboard sounds.
+     * @param guildID The ID of the guild.
+     * @caching This method **may** cache its result. The result will not be cached if the guild is not cached.
+     * @caches {@link Guild#soundboardSounds | Guild#soundboardSounds}
+     */
+    async getSoundboardSounds(guildID: string): Promise<Array<Soundboard>> {
+        const guild = this._manager.client.guilds.get(guildID);
+        return this._manager.authRequest<{ items: Array<RawSoundboard>; }>({
+            method: "GET",
+            path:   Routes.SOUNDBOARD_SOUNDS(guildID)
+        }).then(data => data.items.map(d => guild?.soundboardSounds.update(d) ?? new Soundboard(d, this._manager.client)));
     }
 
     /**

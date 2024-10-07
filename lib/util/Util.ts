@@ -109,6 +109,14 @@ export default class Util {
         }
     }
 
+    _convertSound(sound: Buffer | string, name: string): string {
+        try {
+            return this.convertSound(sound);
+        } catch (err) {
+            throw new TypeError(`Invalid ${name} provided. Ensure you are providing a valid, fully-qualified base64 url.`, { cause: err as Error });
+        }
+    }
+
     /** @hidden intended for internal use only */
     _getLimit(name: Exclude<keyof CollectionLimitsOptions, "users">, id?: string): number {
         const opt = this._client.options.collectionLimits[name];
@@ -336,6 +344,32 @@ export default class Util {
             img = `data:${mime};base64,${b64}`;
         }
         return img;
+    }
+
+    convertSound(audio: Buffer | string): string {
+        if (Buffer.isBuffer(audio)) {
+            const b64 = audio.toString("base64");
+            let mime: string | undefined;
+            const magicMap: Array<[mime: string, magic: RegExp]> = [
+                // 49 44 33
+                ["audio/mpeg", /^494433/],
+                // FF FB
+                ["audio/mpeg", /^FFFB/],
+                // 4F 67 67 53
+                ["audio/ogg", /^4F676753/]
+            ];
+            for (const format of magicMap) {
+                if (format[1].test(this.getMagic(audio, 16))) {
+                    mime = format[0];
+                    break;
+                }
+            }
+            if (!mime) {
+                throw new TypeError(`Failed to determine sound format. (magic: ${this.getMagic(audio, 16)})`);
+            }
+            audio = `data:${mime};base64,${b64}`;
+        }
+        return audio;
     }
 
     convertSticker(raw: RawSticker): Sticker {

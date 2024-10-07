@@ -2,7 +2,7 @@
 import Base from "./Base";
 import User from "./User";
 import type Client from "../Client";
-import { type RawSoundboard } from "../types";
+import { type EditSoundboardSoundOptions, type JSONSoundboard, type RawSoundboard } from "../types";
 
 /** Represents a soundboard. */
 export default class Soundboard extends Base {
@@ -32,5 +32,44 @@ export default class Soundboard extends Base {
         this.soundID = data.sound_id;
         this.user = data.user ? new User(data.user, client) : undefined;
         this.volume = data.volume;
+    }
+
+    /**
+     * Delete this soundboard sound.
+     * @param reason The reason for deleting the soundboard sound.
+     */
+    async delete(reason?: string): Promise<void> {
+        return this.client.rest.guilds.deleteSoundboardSound(this.guildID!, this.id, reason);
+    }
+
+    /**
+     * Edit this soundboard sound.
+     * @param options The options for editing the soundboard sound.
+     */
+    async edit(options: EditSoundboardSoundOptions): Promise<Soundboard> {
+        return this.client.rest.guilds.editSoundboardSound(this.guildID!, this.id, options);
+    }
+
+    /**
+     * Send this soundboard sound to a voice channel.
+     * @param channelID The ID of the voice channel to send the soundboard sound to.
+     * @param sourceGuildID The ID of the guild the soundboard sound is from.
+     */
+    async sendSoundboardSound(channelID: string, sourceGuildID?: string): Promise<void> {
+        return this.client.rest.channels.sendSoundboardSound(channelID, { soundID: this.soundID, sourceGuildID });
+    }
+
+    override toJSON(): JSONSoundboard {
+        return {
+            ...super.toJSON(),
+            available: this.available,
+            emojiID:   this.emojiID,
+            emojiName: this.emojiName,
+            guildID:   this.guildID,
+            name:      this.name,
+            soundID:   this.soundID,
+            user:      this.user?.toJSON(),
+            volume:    this.volume
+        };
     }
 }
