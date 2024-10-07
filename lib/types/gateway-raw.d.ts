@@ -534,6 +534,14 @@ export interface InteractionCreatePacket extends BaseDispatchPacket {
     t: "INTERACTION_CREATE";
 }
 
+export interface SoundboardSounds extends BaseDispatchPacket {
+    d: {
+        guild_id: string;
+        soundboard_sounds: Array<RawSoundboard>;
+    };
+    t: "SOUNDBOARD_SOUNDS";
+}
+
 export interface StageInstanceCreatePacket extends BaseDispatchPacket {
     d: RawStageInstance;
     t: "STAGE_INSTANCE_CREATE";
@@ -601,6 +609,6 @@ GuildScheduledEventCreatePacket | GuildScheduledEventDeletePacket | GuildSchedul
 IntegrationCreatePacket | IntegrationDeletePacket | IntegrationUpdatePacket |
 InviteCreatePacket | InviteDeletePacket |
 MessageCreatePacket | MessageDeletePacket | MessageDeleteBulkPacket | MessageUpdatePacket | MessageReactionAddPacket | MessageReactionRemovePacket | MessageReactionRemoveAllPacket | MessageReactionRemoveEmojiPacket |
-TypingStartPacket | UserUpdatePacket | VoiceStateUpdatePacket | VoiceChannelEffectSendPacket | VoiceChannelStatusUpdatePacket | VoiceServerUpdatePacket | WebhooksUpdatePacket | InteractionCreatePacket | StageInstanceCreatePacket | StageInstanceDeletePacket | StageInstanceUpdatePacket |
+TypingStartPacket | UserUpdatePacket | VoiceStateUpdatePacket | VoiceChannelEffectSendPacket | VoiceChannelStatusUpdatePacket | VoiceServerUpdatePacket | WebhooksUpdatePacket | InteractionCreatePacket | SoundboardSounds | StageInstanceCreatePacket | StageInstanceDeletePacket | StageInstanceUpdatePacket |
 EntitlementCreatePacket | EntitlementUpdatePacket | EntitlementDeletePacket |
 MessagePollVoteAdd | MessagePollVoteRemove;
