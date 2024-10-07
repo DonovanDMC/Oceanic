@@ -5,7 +5,7 @@ import type { RawSticker, RawStickerPack, Sticker, StickerPack } from "../types/
 import type { VoiceRegion } from "../types/voice";
 import type { RawRefreshAttachmentURLsResponse, RefreshAttachmentURLsResponse } from "../types/misc";
 import Soundboard from "../structures/Soundboard";
-import { type RawSoundboard } from "../types";
+import type { RawSoundboard } from "../types";
 
 /** Methods that don't fit anywhere else. Located at {@link Client#rest | Client#rest}{@link RESTManager#misc | .misc}. */
 export default class Miscellaneous {

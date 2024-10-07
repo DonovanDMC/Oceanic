@@ -2,7 +2,7 @@
 import Base from "./Base";
 import User from "./User";
 import type Client from "../Client";
-import { type EditSoundboardSoundOptions, type JSONSoundboard, type RawSoundboard } from "../types";
+import type { EditSoundboardSoundOptions, JSONSoundboard, RawSoundboard } from "../types";
 
 /** Represents a soundboard. */
 export default class Soundboard extends Base {
