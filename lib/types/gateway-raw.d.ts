@@ -351,17 +351,22 @@ export interface GuildSoundboardSoundCreatePacket extends BaseDispatchPacket {
     t: "GUILD_SOUNDBOARD_SOUND_CREATE";
 }
 
-export interface GuildSoundboardSoundUpdatePacket extends BaseDispatchPacket {
-    d: RawSoundboard & { guild_id: string; };
-    t: "GUILD_SOUNDBOARD_SOUND_UPDATE";
-}
-
 export interface GuildSoundboardSoundDeletePacket extends BaseDispatchPacket {
     d: {
         guild_id: string;
         sound_id: string;
     };
     t: "GUILD_SOUNDBOARD_SOUND_DELETE";
+}
+
+export interface GuildSoundboardSoundUpdatePacket extends BaseDispatchPacket {
+    d: RawSoundboard & { guild_id: string; };
+    t: "GUILD_SOUNDBOARD_SOUND_UPDATE";
+}
+
+export interface GuildSoundboardSoundsUpdatePacket extends BaseDispatchPacket {
+    d: Array<RawSoundboard & { guild_id: string; }>;
+    t: "GUILD_SOUNDBOARD_SOUNDS_UPDATE";
 }
 
 export interface IntegrationCreatePacket extends BaseDispatchPacket {
@@ -534,7 +539,7 @@ export interface InteractionCreatePacket extends BaseDispatchPacket {
     t: "INTERACTION_CREATE";
 }
 
-export interface SoundboardSounds extends BaseDispatchPacket {
+export interface SoundboardSoundsPacket extends BaseDispatchPacket {
     d: {
         guild_id: string;
         soundboard_sounds: Array<RawSoundboard>;
@@ -605,10 +610,10 @@ ThreadCreatePacket | ThreadDeletePacket | ThreadUpdatePacket | ThreadListSyncPac
 GuildBanAddPacket | GuildBanRemovePacket | GuildEmojisUpdatePacket | GuildStickersUpdatePacket | GuildIntegrationsUpdatePacket |
 GuildMemberAddPacket | GuildMemberRemovePacket | GuildMemberUpdatePacket | GuildMembersChunkPacket |
 GuildRoleCreatePacket | GuildRoleDeletePacket | GuildRoleUpdatePacket |
-GuildScheduledEventCreatePacket | GuildScheduledEventDeletePacket | GuildScheduledEventUpdatePacket | GuildScheduledEventUserAddPacket | GuildScheduledEventUserRemovePacket | GuildSoundboardSoundCreatePacket | GuildSoundboardSoundDeletePacket | GuildSoundboardSoundUpdatePacket |
+GuildScheduledEventCreatePacket | GuildScheduledEventDeletePacket | GuildScheduledEventUpdatePacket | GuildScheduledEventUserAddPacket | GuildScheduledEventUserRemovePacket | GuildSoundboardSoundCreatePacket | GuildSoundboardSoundDeletePacket | GuildSoundboardSoundUpdatePacket | GuildSoundboardSoundsUpdatePacket |
 IntegrationCreatePacket | IntegrationDeletePacket | IntegrationUpdatePacket |
 InviteCreatePacket | InviteDeletePacket |
 MessageCreatePacket | MessageDeletePacket | MessageDeleteBulkPacket | MessageUpdatePacket | MessageReactionAddPacket | MessageReactionRemovePacket | MessageReactionRemoveAllPacket | MessageReactionRemoveEmojiPacket |
-TypingStartPacket | UserUpdatePacket | VoiceStateUpdatePacket | VoiceChannelEffectSendPacket | VoiceChannelStatusUpdatePacket | VoiceServerUpdatePacket | WebhooksUpdatePacket | InteractionCreatePacket | SoundboardSounds | StageInstanceCreatePacket | StageInstanceDeletePacket | StageInstanceUpdatePacket |
+TypingStartPacket | UserUpdatePacket | VoiceStateUpdatePacket | VoiceChannelEffectSendPacket | VoiceChannelStatusUpdatePacket | VoiceServerUpdatePacket | WebhooksUpdatePacket | InteractionCreatePacket | SoundboardSoundsPacket | StageInstanceCreatePacket | StageInstanceDeletePacket | StageInstanceUpdatePacket |
 EntitlementCreatePacket | EntitlementUpdatePacket | EntitlementDeletePacket |
 MessagePollVoteAdd | MessagePollVoteRemove;

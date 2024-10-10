@@ -236,6 +236,14 @@ export interface RequestGuildMembersOptions {
     userIDs?: Array<string>;
 }
 
+export interface RequestSoundboardSoundsOptions {
+    /**
+     * The maximum amount of time in milliseconds to wait.
+     * @defaultValue `client.rest.options.requestTimeout`
+     */
+    timeout?: number;
+}
+
 export type MutualStatuses = "online" | "dnd" | "idle";
 export type SendStatuses = MutualStatuses | "invisible";
 export type ReceiveStatuses = MutualStatuses | "offline";
