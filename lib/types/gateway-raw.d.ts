@@ -365,7 +365,10 @@ export interface GuildSoundboardSoundUpdatePacket extends BaseDispatchPacket {
 }
 
 export interface GuildSoundboardSoundsUpdatePacket extends BaseDispatchPacket {
-    d: Array<RawSoundboard & { guild_id: string; }>;
+    d: {
+        guild_id: string;
+        soundboard_sounds: Array<RawSoundboard & { guild_id: string; }>;
+    };
     t: "GUILD_SOUNDBOARD_SOUNDS_UPDATE";
 }
 

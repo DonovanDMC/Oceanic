@@ -404,15 +404,10 @@ export async function GUILD_SOUNDBOARD_SOUND_UPDATE(data: DispatchEventMap["GUIL
 }
 
 export async function GUILD_SOUNDBOARD_SOUNDS_UPDATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUNDS_UPDATE"], shard: Shard): Promise<void> {
-    const guild = shard.client.guilds.get(data[0].guild_id);
-    if (guild) {
-        const oldSounds = data.map(rawSound => {
-            const sound = guild.soundboardSounds.get(rawSound.sound_id);
-            return sound?.toJSON() ?? null;
-        });
-        shard.client.emit("guildSoundboardSoundsUpdate", data.map(sound => guild.soundboardSounds.update(sound)), oldSounds);
-    }
-    shard.client.emit("guildSoundboardSoundsUpdate", data.map(sound => new Soundboard(sound, shard.client)), [null]);
+    const guild = shard.client.guilds.get(data.guild_id);
+    const oldSoundboardSounds = data.soundboard_sounds.map(rawSound => guild?.soundboardSounds.get(rawSound.sound_id)?.toJSON() ?? null);
+    const newSoundboardSounds = data.soundboard_sounds.map(sound => guild?.soundboardSounds.update(sound) ?? new Soundboard(sound, shard.client));
+    shard.client.emit("guildSoundboardSoundsUpdate", newSoundboardSounds, oldSoundboardSounds, data.guild_id);
 }
 
 export async function GUILD_STICKERS_UPDATE(data: DispatchEventMap["GUILD_STICKERS_UPDATE"], shard: Shard): Promise<void> {

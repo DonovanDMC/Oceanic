@@ -152,7 +152,7 @@ export interface ClientEvents {
     /** @event Emitted when a guild's soundboard sound is updated. Requires the `GUILD_EXPRESSIONS` intent. */
     guildSoundboardSoundUpdate: [soundboardSound: Soundboard, oldSoundboardSound: JSONSoundboard | null];
     /** @event Emitted when multiple guild's soundboard sounds are updated. Requires the `GUILD_EXPRESSIONS` intent. */
-    guildSoundboardSoundsUpdate: [soundboardSounds: Array<Soundboard>, oldSoundboardSounds: Array<JSONSoundboard | null>];
+    guildSoundboardSoundsUpdate: [soundboardSounds: Array<Soundboard>, oldSoundboardSounds: Array<JSONSoundboard | null>, guildID: string];
     /** @event Emitted when a guild's stickers are updated. Requires the `GUILD_EXPRESSIONS` intent. */
     guildStickersUpdate: [guild: Guild | Uncached, stickers: Array<Sticker>, oldStickers: Array<Sticker> | null];
     /** @event Emitted when a guild becomes unavailable. Requires the `GUILDS` intent. */
