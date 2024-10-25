@@ -48,7 +48,7 @@
     "@types/pako": "^2.0.3",
     "@types/ws": "^8.5.12",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@typescript-eslint/parser": "^8.11.0",
     "erlpack": "^0.1.4",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.31.0",
