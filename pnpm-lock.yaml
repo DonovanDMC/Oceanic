@@ -88,8 +88,8 @@ importers:
         specifier: ~3.0.0
         version: 3.0.0(typedoc@0.25.13(typescript@5.4.5))
       typedoc-plugin-mdn-links:
-        specifier: ^3.3.4
-        version: 3.3.4(typedoc@0.25.13(typescript@5.4.5))
+        specifier: ^3.3.8
+        version: 3.3.8(typedoc@0.25.13(typescript@5.4.5))
       typedoc-plugin-merge-modules:
         specifier: ^5.1.0
         version: 5.1.0(patch_hash=gocpkc2skry6n6ryqxlqgguhya)(typedoc@0.25.13(typescript@5.4.5))
@@ -116,6 +116,7 @@ packages:
   '@discordjs/voice@0.17.0':
     resolution: {integrity: sha512-hArn9FF5ZYi1IkxdJEVnJi+OxlwLV0NJYWpKXsmNOojtGtAZHxmsELA+MZlu2KW1F/K1/nt7lFOfcMXNYweq9w==}
     engines: {node: '>=16.11.0'}
+    deprecated: This version uses deprecated encryption modes. Please use a newer version.
 
   '@es-joy/jsdoccomment@0.49.0':
     resolution: {integrity: sha512-xjZTSFgECpb9Ohuk5yMX5RhUEbfeQcuOp8IF60e+wyzWEF0M5xeSgqsfLtvPEX8BIyOX9saZqzuGPmZ8oWc+5Q==}
@@ -1570,8 +1571,8 @@ packages:
     peerDependencies:
       typedoc: 0.25.x
 
-  typedoc-plugin-mdn-links@3.3.4:
-    resolution: {integrity: sha512-jF/QpTT43rDeSG6Sh0d5HUsoxz6RlfGNKrP/9KJjTLkQwxbbfEc6cUh6KtbPRVbxAdjIXbgCg+pdn01e27isrg==}
+  typedoc-plugin-mdn-links@3.3.8:
+    resolution: {integrity: sha512-Aewg+SW7hBdffRpT6WnpRwWthoaF9irlzXDKRyvcDVekPZSFujOlh690SV6eCgqrtP7GBJmN0TVeJUq6+6rb1w==}
     peerDependencies:
       typedoc: '>= 0.23.14 || 0.24.x || 0.25.x || 0.26.x'
 
@@ -3364,7 +3365,7 @@ snapshots:
     dependencies:
       typedoc: 0.25.13(typescript@5.4.5)
 
-  typedoc-plugin-mdn-links@3.3.4(typedoc@0.25.13(typescript@5.4.5)):
+  typedoc-plugin-mdn-links@3.3.8(typedoc@0.25.13(typescript@5.4.5)):
     dependencies:
       typedoc: 0.25.13(typescript@5.4.5)
 
