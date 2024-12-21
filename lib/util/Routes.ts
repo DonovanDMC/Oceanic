@@ -143,7 +143,7 @@ export const APPLICATION_COMMANDS                  = (applicationID: string) => 
 export const GUILD_APPLICATION_COMMAND             = (applicationID: string, guildID: string, commandID: string) => encode`/applications/${applicationID}/guilds/${guildID}/commands/${commandID}`;
 export const GUILD_APPLICATION_COMMANDS            = (applicationID: string, guildID: string) => encode`/applications/${applicationID}/guilds/${guildID}/commands`;
 export const GUILD_APPLICATION_COMMAND_PERMISSION  = (applicationID: string, guildID: string, commandID: string) => encode`/applications/${applicationID}/guilds/${guildID}/commands/${commandID}/permissions`;
-export const GUILD_APPLICATION_COMMAND_PERMISSIONS = (applicationID: string, guildID: string) => encode`/applications/${applicationID}/guilds/${guildID}commands/permissions`;
+export const GUILD_APPLICATION_COMMAND_PERMISSIONS = (applicationID: string, guildID: string) => encode`/applications/${applicationID}/guilds/${guildID}/commands/permissions`;
 export const INTERACTION_CALLBACK                  = (interactionID: string, interactionToken: string) => encode`/interactions/${interactionID}/${interactionToken}/callback`;
 export const APPLICATION                           = "/applications/@me";
 export const ENTITLEMENTS                          = (applicationID: string) => encode`/applications/${applicationID}/entitlements`;
