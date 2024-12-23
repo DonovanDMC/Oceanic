@@ -747,7 +747,7 @@ export default class Channels {
             async *[Symbol.asyncIterator](): AsyncGenerator<Array<Message<T>>> {
                 loop: while (it.limit > 0) {
                     const messages = await self.getMessages<T>(channelID, {
-                        limit:          it.limit >= 100 ? 100 : it.limit,
+                        limit:          Math.min(it.limit, 100),
                         [chosenOption]: it.lastMessage
                     });
 
@@ -951,7 +951,7 @@ export default class Channels {
         let reactions: Array<User> = [];
         while (reactions.length < limit) {
             const limitLeft = limit - reactions.length;
-            const limitToFetch = limitLeft <= 100 ? limitLeft : 100;
+            const limitToFetch = Math.min(limitLeft, 100);
             this._manager.client.emit("debug", `Getting ${limitLeft} more ${emoji} reactions for message ${messageID} on ${channelID}: ${after ?? ""}`);
             const reactionsChunk = await _getReactions({
                 after,

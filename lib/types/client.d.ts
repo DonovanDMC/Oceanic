@@ -2,7 +2,7 @@
 import type { AllowedMentions } from "./channels";
 import type { GatewayOptions } from "./gateway";
 import type { ImageFormat } from "../Constants";
-import type { Agent } from "undici-types";
+import type { Dispatcher } from "undici-types";
 
 export interface ClientOptions {
     /**
@@ -51,7 +51,7 @@ export interface RESTOptions {
      * The agent to use for requests.
      * @defaultValue null
      */
-    agent?: Agent | null;
+    agent?: Dispatcher | null;
     /**
      * The base URL to use for requests - must be a fully qualified url.
      * @defaultValue https://discordapp.com/api/v\{REST_VERSION\}

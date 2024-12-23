@@ -894,7 +894,7 @@ export async function THREAD_MEMBERS_UPDATE(data: DispatchEventMap["THREAD_MEMBE
         }
         for (const [index, { userID }] of removedMembers.entries()) {
             const memberIndex = thread.members.findIndex(m => m.userID === userID);
-            if (memberIndex >= 0) {
+            if (memberIndex !== -1) {
                 removedMembers[index] = thread.members[memberIndex];
                 thread.members.splice(memberIndex, 1);
             }

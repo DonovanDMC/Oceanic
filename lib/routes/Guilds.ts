@@ -1371,7 +1371,7 @@ export default class Guilds {
         let bans: Array<Ban> = [];
         while (bans.length < limit) {
             const limitLeft = limit - bans.length;
-            const limitToFetch = limitLeft <= 1000 ? limitLeft : 1000;
+            const limitToFetch = Math.min(limitLeft, 1000);
             this._manager.client.emit("debug", `Getting ${limitLeft} more ban${limitLeft === 1 ? "" : "s"} for ${guildID}: ${optionValue ?? ""}`);
             const bansChunk = await _getBans({
                 limit:          limitToFetch,
