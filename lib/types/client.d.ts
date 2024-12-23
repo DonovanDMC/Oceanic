@@ -202,6 +202,12 @@ export interface CollectionLimitsOptions {
      */
     scheduledEvents?: number | Record<string, number>;
     /**
+     * The maximum number of soundboard sounds to cache.
+     * @dictionaryKey guild id
+     * @defaultValue Infinity
+     */
+    soundboardSounds?: number | Record<string, number>;
+    /**
      * The maximum number of stage instances to cache.
      * @dictionaryKey guild id
      * @defaultValue Infinity

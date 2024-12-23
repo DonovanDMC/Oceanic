@@ -683,6 +683,34 @@ export interface EditMFALevelOptions {
     reason?: string;
 }
 
+export interface CreateSoundboardSoundOptions {
+    /** The ID of the emoji of the soundboard sound. */
+    emojiID?: string;
+    /** The name of the emoji of the soundboard sound. */
+    emojiName?: string;
+    /** The name of the soundboard sound. */
+    name: string;
+    /** The reason for creating the soundboard sound. */
+    reason?: string;
+    /** The mp3 or ogg sound data. */
+    sound: Buffer | string;
+    /** The volume of the soundboard sound. */
+    volume?: number;
+}
+
+export interface EditSoundboardSoundOptions {
+    /** The ID of the emoji of the soundboard sound. */
+    emojiID?: string;
+    /** The name of the emoji of the soundboard sound. */
+    emojiName?: string;
+    /** The name of the soundboard sound. */
+    name?: string;
+    /** The reason for editing the soundboard sound. */
+    reason?: string;
+    /** The volume of the soundboard sound. */
+    volume?: number;
+}
+
 export interface CreateStickerOptions {
     /** The description of the sticker. */
     description: string;

@@ -34,6 +34,7 @@ import Integration from "../structures/Integration";
 import VoiceState from "../structures/VoiceState";
 import AuditLogEntry from "../structures/AuditLogEntry";
 import type User from "../structures/User";
+import Soundboard from "../structures/Soundboard";
 
 export async function APPLICATION_COMMAND_PERMISSIONS_UPDATE(data: DispatchEventMap["APPLICATION_COMMAND_PERMISSIONS_UPDATE"], shard: Shard): Promise<void> {
     shard.client.emit("applicationCommandPermissionsUpdate", shard.client.guilds.get(data.guild_id) ?? { id: data.guild_id }, {
@@ -382,6 +383,33 @@ export async function GUILD_SCHEDULED_EVENT_USER_REMOVE(data: DispatchEventMap["
     shard.client.emit("guildScheduledEventUserRemove", event ?? { id: data.guild_scheduled_event_id }, user ?? { id: data.user_id });
 }
 
+export async function GUILD_SOUNDBOARD_SOUND_CREATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_CREATE"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id);
+    const soundboardSound = guild?.soundboardSounds.update(data) ?? new Soundboard(data, shard.client);
+    shard.client.emit("guildSoundboardSoundCreate", soundboardSound);
+}
+
+export async function GUILD_SOUNDBOARD_SOUND_DELETE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_DELETE"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id);
+    const soundboardSound = guild?.soundboardSounds.get(data.sound_id);
+    guild?.soundboardSounds.delete(data.sound_id);
+    shard.client.emit("guildSoundboardSoundDelete", soundboardSound ?? { id: data.sound_id });
+}
+
+export async function GUILD_SOUNDBOARD_SOUND_UPDATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUND_UPDATE"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id);
+    const oldSoundboardSound = guild?.soundboardSounds.get(data.sound_id)?.toJSON() ?? null;
+    const soundboardSound = guild?.soundboardSounds.update(data) ?? new Soundboard(data, shard.client);
+    shard.client.emit("guildSoundboardSoundUpdate", soundboardSound, oldSoundboardSound);
+}
+
+export async function GUILD_SOUNDBOARD_SOUNDS_UPDATE(data: DispatchEventMap["GUILD_SOUNDBOARD_SOUNDS_UPDATE"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id);
+    const oldSoundboardSounds = data.soundboard_sounds.map(rawSound => guild?.soundboardSounds.get(rawSound.sound_id)?.toJSON() ?? null);
+    const newSoundboardSounds = data.soundboard_sounds.map(sound => guild?.soundboardSounds.update(sound) ?? new Soundboard(sound, shard.client));
+    shard.client.emit("guildSoundboardSoundsUpdate", newSoundboardSounds, oldSoundboardSounds, data.guild_id);
+}
+
 export async function GUILD_STICKERS_UPDATE(data: DispatchEventMap["GUILD_STICKERS_UPDATE"], shard: Shard): Promise<void> {
     const guild = shard.client.guilds.get(data.guild_id);
     const oldStickers = guild?.stickers ? guild.stickers.toArray() : null;
@@ -720,6 +748,22 @@ export async function READY(data: DispatchEventMap["READY"], shard: Shard): Prom
 
 export async function RESUMED(data: DispatchEventMap["RESUMED"], shard: Shard): Promise<void> {
     shard["_resume"]();
+}
+
+export async function SOUNDBOARD_SOUNDS(data: DispatchEventMap["SOUNDBOARD_SOUNDS"], shard: Shard): Promise<void> {
+    const guild = shard.client.guilds.get(data.guild_id);
+    const soundboardSounds = data.soundboard_sounds.map(soundboardSound => guild?.soundboardSounds.update(soundboardSound) ?? new Soundboard(soundboardSound, shard.client));
+    for (const nonce in shard["_requestSoundboardSoundsPromise"]) {
+        if (data.guild_id === shard["_requestSoundboardSoundsPromise"][nonce].guildID) {
+            shard["_requestSoundboardSoundsPromise"][nonce].soundboardSounds.push(...soundboardSounds);
+            clearTimeout(shard["_requestSoundboardSoundsPromise"][nonce].timeout);
+            shard["_requestSoundboardSoundsPromise"][nonce].resolve(shard["_requestSoundboardSoundsPromise"][nonce].soundboardSounds);
+            delete shard["_requestSoundboardSoundsPromise"][nonce];
+        }
+    }
+
+    shard.client.emit("soundboardSounds", data.guild_id, soundboardSounds);
+    shard.lastHeartbeatAck = true;
 }
 
 export async function STAGE_INSTANCE_CREATE(data: DispatchEventMap["STAGE_INSTANCE_CREATE"], shard: Shard): Promise<void> {

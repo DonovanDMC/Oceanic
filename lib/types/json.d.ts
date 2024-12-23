@@ -651,6 +651,16 @@ export interface JSONScheduledEvent extends JSONBase {
     status: GuildScheduledEventStatuses;
     userCount?: number;
 }
+export interface JSONSoundboard extends JSONBase {
+    available: boolean;
+    emojiID: string | null;
+    emojiName: string | null;
+    guildID?: string;
+    name: string;
+    soundID: string;
+    user?: JSONUser;
+    volume: number;
+}
 export interface JSONStageChannel extends JSONTextableVoiceChannel {
     type: ChannelTypes.GUILD_STAGE_VOICE;
 }

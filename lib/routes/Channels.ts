@@ -44,7 +44,8 @@ import type {
     AnyGuildChannel,
     GetChannelMessagesIteratorOptions,
     MessagesIterator,
-    GetPollAnswerUsersOptions
+    GetPollAnswerUsersOptions,
+    SendSoundboardSoundOptions
 } from "../types/channels";
 import * as Routes from "../util/Routes";
 import type Message from "../structures/Message";
@@ -1163,6 +1164,21 @@ export default class Channels {
         await this._manager.authRequest<null>({
             method: "DELETE",
             path:   Routes.CHANNEL_THREAD_MEMBER(channelID, userID)
+        });
+    }
+
+    /**
+     * Send a sound from the soundboard to the channel where the user is connected.
+     * @param channelID The ID of the channel to send the soundboard sound to.
+     * @param soundID The ID of the soundboard sound to send.
+     * @param sourceGuildID The ID of the guild the soundboard sound is from.
+     * @caching This method **does not** cache its result.
+     */
+    async sendSoundboardSound(channelID: string, options: SendSoundboardSoundOptions): Promise<void> {
+        await this._manager.authRequest<null>({
+            method: "POST",
+            path:   Routes.SEND_SOUNDBOARD_SOUND(channelID),
+            json:   { sound_id: options.soundID, source_guild_id: options.sourceGuildID }
         });
     }
 

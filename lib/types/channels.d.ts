@@ -722,6 +722,17 @@ export interface RawMessage {
     webhook_id?: string;
 }
 
+export interface RawSoundboard {
+    available: boolean;
+    emoji_id: string | null;
+    emoji_name: string | null;
+    guild_id?: string;
+    name: string;
+    sound_id: string;
+    user?: RawUser;
+    volume: number;
+}
+
 export interface RawCall {
     ended_timestamp?: string | null;
     participants: Array<string>;
@@ -918,6 +929,13 @@ export interface GetReactionsOptions {
     limit?: number;
     /** The type of reactions to get. Defaults to normal. */
     type?: ReactionType;
+}
+
+export interface SendSoundboardSoundOptions {
+    /** The ID of the soundboard sound to send. */
+    soundID: string;
+    /** The ID of the guild the soundboard sound is from. */
+    sourceGuildID?: string;
 }
 
 export interface EditMessageOptions extends Nullable<Pick<CreateMessageOptions, "content" | "embeds" | "allowedMentions" | "components" | "attachments" | "files" | "flags">> {}

@@ -4,12 +4,25 @@ import type RESTManager from "../rest/RESTManager";
 import type { RawSticker, RawStickerPack, Sticker, StickerPack } from "../types/guilds";
 import type { VoiceRegion } from "../types/voice";
 import type { RawRefreshAttachmentURLsResponse, RefreshAttachmentURLsResponse } from "../types/misc";
+import Soundboard from "../structures/Soundboard";
+import type { RawSoundboard } from "../types";
 
 /** Methods that don't fit anywhere else. Located at {@link Client#rest | Client#rest}{@link RESTManager#misc | .misc}. */
 export default class Miscellaneous {
     private _manager: RESTManager;
     constructor(manager: RESTManager) {
         this._manager = manager;
+    }
+
+    /**
+     * Get the default soundboard sounds.
+     * @caching This method **does not** cache its result.
+     */
+    async getDefaultSoundboardSounds(): Promise<Array<Soundboard>> {
+        return this._manager.authRequest<Array<RawSoundboard>>({
+            method: "GET",
+            path:   Routes.SOUNDBOARD_DEFAULT_SOUNDS
+        }).then(data => data.map(d => new Soundboard(d, this._manager.client)));
     }
 
     /**

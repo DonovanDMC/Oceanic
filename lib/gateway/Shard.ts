@@ -11,7 +11,8 @@ import type {
     UpdateVoiceStateOptions,
     SendStatuses,
     BotActivity,
-    ShardStatus
+    ShardStatus,
+    RequestSoundboardSoundsOptions
 } from "../types/gateway";
 import type Member from "../structures/Member";
 import Base from "../structures/Base";
@@ -23,6 +24,7 @@ import type Guild from "../structures/Guild";
 import type { ShardEvents } from "../types/events";
 import { GatewayError, DependencyError } from "../util/Errors";
 import ClientApplication from "../structures/ClientApplication";
+import type Soundboard from "../structures/Soundboard";
 import WebSocket, { type Data } from "ws";
 import { randomBytes } from "node:crypto";
 import { inspect } from "node:util";
@@ -44,6 +46,7 @@ export default class Shard extends TypedEmitter<ShardEvents> {
     private _guildCreateTimeout: NodeJS.Timeout | null;
     private _heartbeatInterval: NodeJS.Timeout | null;
     private _requestMembersPromise: Record<string, { members: Array<Member>; received: number; timeout: NodeJS.Timeout; reject(reason?: unknown): void; resolve(value: unknown): void; }>;
+    private _requestSoundboardSoundsPromise: Record<string, { guildID: string; soundboardSounds: Array<Soundboard>; timeout: NodeJS.Timeout; reject(reason?: unknown): void; resolve(value: unknown): void; }>;
     client!: Client;
     connectAttempts: number;
     connecting: boolean;
@@ -108,6 +111,7 @@ export default class Shard extends TypedEmitter<ShardEvents> {
         this.ready = false;
         this.reconnectInterval = 1000;
         this._requestMembersPromise = {};
+        this._requestSoundboardSoundsPromise = {};
         this.resumeURL = null;
         this.sequence = 0;
         this.sessionID = null;
@@ -707,6 +711,24 @@ export default class Shard extends TypedEmitter<ShardEvents> {
             timeout:  setTimeout(() => {
                 resolve(this._requestMembersPromise[opts.nonce].members);
                 delete this._requestMembersPromise[opts.nonce];
+            }, options?.timeout ?? this.client.rest.options.requestTimeout),
+            resolve,
+            reject
+        });
+    }
+
+    async requestSoundboardSounds(guildID: string, options?: RequestSoundboardSoundsOptions): Promise<Array<Soundboard>> {
+        const opts = {
+            guild_ids: [guildID],
+            nonce:     randomBytes(16).toString("hex")
+        };
+        this.send(GatewayOPCodes.REQUEST_SOUNDBOARD_SOUNDS, opts);
+        return new Promise((resolve, reject) => this._requestSoundboardSoundsPromise[opts.nonce] = {
+            guildID,
+            soundboardSounds: [],
+            timeout:          setTimeout(() => {
+                resolve(this._requestSoundboardSoundsPromise[opts.nonce].soundboardSounds);
+                delete this._requestSoundboardSoundsPromise[opts.nonce];
             }, options?.timeout ?? this.client.rest.options.requestTimeout),
             resolve,
             reject

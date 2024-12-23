@@ -24,6 +24,7 @@ import type Webhook from "./Webhook";
 import AuditLogEntry from "./AuditLogEntry";
 import type Entitlement from "./Entitlement";
 import type TestEntitlement from "./TestEntitlement";
+import Soundboard from "./Soundboard";
 import {
     AllPermissions,
     Permissions,
@@ -52,7 +53,8 @@ import type {
     RawGuildChannel,
     RawThreadChannel,
     GuildChannelsWithoutThreads,
-    RawInvite
+    RawInvite,
+    RawSoundboard
 } from "../types/channels";
 import type {
     AddMemberOptions,
@@ -104,7 +106,9 @@ import type {
     BulkBanOptions,
     BulkBanResponse,
     MemberSearchOptions,
-    MemberSearchResults
+    MemberSearchResults,
+    CreateSoundboardSoundOptions,
+    EditSoundboardSoundOptions
 } from "../types/guilds";
 import type {
     CreateScheduledEventOptions,
@@ -229,6 +233,8 @@ export default class Guild extends Base {
     safetyAlertsChannelID: string | null;
     /** The scheduled events in this guild. */
     scheduledEvents: TypedCollection<RawScheduledEvent, GuildScheduledEvent>;
+    /** The soundboard sounds in this guild. */
+    soundboardSounds: TypedCollection<RawSoundboard, Soundboard>;
     /** The invite splash hash of this guild. */
     splash: string | null;
     /** The stage instances in this guild. */
@@ -305,6 +311,7 @@ export default class Guild extends Base {
         this.rulesChannelID = null;
         this.safetyAlertsChannelID = null;
         this.scheduledEvents = new TypedCollection(GuildScheduledEvent, client, client.util._getLimit("scheduledEvents", this.id));
+        this.soundboardSounds = new TypedCollection(Soundboard, client, client.util._getLimit("soundboardSounds", this.id));
         this.splash = null;
         this.stageInstances = new TypedCollection(StageInstance, client, client.util._getLimit("stageInstances", this.id));
         this.stickers = new SimpleCollection(rawSticker => client.util.convertSticker(rawSticker), client.util._getLimit("stickers", this.id), "merge");
@@ -782,6 +789,14 @@ export default class Guild extends Base {
     }
 
     /**
+     * Create a soundboard sound.
+     * @param options The options for creating the soundboard sound.
+     */
+    async createSoundboardSound(options: CreateSoundboardSoundOptions): Promise<Soundboard> {
+        return this.client.rest.guilds.createSoundboardSound(this.id, options);
+    }
+
+    /**
      * Create a sticker.
      * @param options The options for creating the sticker.
      */
@@ -863,6 +878,15 @@ export default class Guild extends Base {
      */
     async deleteScheduledEvent(eventID: string, reason?: string): Promise<void> {
         return this.client.rest.guilds.deleteScheduledEvent(this.id, eventID, reason);
+    }
+
+    /**
+     * Delete a soundboard sound.
+     * @param soundID The ID of the soundboard sound.
+     * @param reason The reason for deleting the soundboard sound.
+     */
+    async deleteSoundboardSound(soundID: string, reason?: string): Promise<void> {
+        return this.client.rest.guilds.deleteSoundboardSound(this.id, soundID, reason);
     }
 
     /**
@@ -1026,6 +1050,15 @@ export default class Guild extends Base {
      */
     async editScheduledEvent(options: EditScheduledEventOptions): Promise<GuildScheduledEvent> {
         return this.client.rest.guilds.editScheduledEvent(this.id, options);
+    }
+
+    /**
+     * Edit a soundboard sound.
+     * @param soundID The ID of the soundboard sound.
+     * @param options The options for editing the soundboard sound.
+     */
+    async editSoundboardSound(soundID: string, options: EditSoundboardSoundOptions): Promise<Soundboard> {
+        return this.client.rest.guilds.editSoundboardSound(this.id, soundID, options);
     }
 
     /**
@@ -1282,6 +1315,21 @@ export default class Guild extends Base {
      */
     async getScheduledEvents(withUserCount?: number): Promise<Array<GuildScheduledEvent>> {
         return this.client.rest.guilds.getScheduledEvents(this.id, withUserCount);
+    }
+
+    /**
+     * Get a soundboard sound.
+     * @param soundID The ID of the soundboard sound to get.
+     */
+    async getSoundboardSound(soundID: string): Promise<Soundboard> {
+        return this.client.rest.guilds.getSoundboardSound(this.id, soundID);
+    }
+
+    /**
+     * Get this guild's soundboard sounds.
+     */
+    async getSoundboardSounds(): Promise<Array<Soundboard>> {
+        return this.client.rest.guilds.getSoundboardSounds(this.id);
     }
 
     /**
