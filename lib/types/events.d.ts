@@ -165,7 +165,7 @@ export interface ClientEvents {
     inviteDelete: [invite: PossiblyUncachedInvite];
     /** @event Emitted when a message is created. Requires the `GUILD_MESSAGES` intent for guild messages, `DIRECT_MESSAGES` for direct messages. The `MESSAGE_CONTENT` intent is required for `content`, `embeds`, and similar to be present on most messages. */
     messageCreate: [message: Message];
-    /** @event Emitted when a message is created. Requires the `GUILD_MESSAGES` intent for guild messages, `DIRECT_MESSAGES` for direct messages. The `MESSAGE_CONTENT` intent is required for `content`, `embeds`, and similar to be present on most messages. */
+    /** @event Emitted when a message is deleted. Requires the `GUILD_MESSAGES` intent for guild messages, `DIRECT_MESSAGES` for direct messages. The `MESSAGE_CONTENT` intent is required for `content`, `embeds`, and similar to be present on most messages. */
     messageDelete: [message: PossiblyUncachedMessage];
     /** @event Emitted when messages are bulk deleted. Requires the `GUILD_MESSAGES` intent. The `MESSAGE_CONTENT` intent is required for `content`, `embeds`, and similar to be present on most messages. */
     messageDeleteBulk: [messages: Array<PossiblyUncachedMessage>];
